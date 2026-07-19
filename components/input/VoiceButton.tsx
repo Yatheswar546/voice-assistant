@@ -1,0 +1,44 @@
+import { Mic, MicOff } from "lucide-react";
+
+interface VoiceButtonProps {
+  isLoading: boolean;
+  isListening: boolean;
+  startListening: () => void;
+  stopListening: () => void;
+}
+
+export default function VoiceButton({
+  isLoading,
+  isListening,
+  startListening,
+  stopListening,
+}: VoiceButtonProps) {
+
+  const handleClick = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isLoading}
+      className="group flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-700 shadow-[0_0_30px_rgba(59,130,246,0.45)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_45px_rgba(59,130,246,0.7)] disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {isListening ? (
+        <MicOff
+          size={28}
+          className="text-red-400 transition-transform group-hover:scale-110"
+        />
+      ) : (
+        <Mic
+          size={28}
+          className="text-white transition-transform group-hover:scale-110"
+        />
+      )}
+    </button>
+  );
+}

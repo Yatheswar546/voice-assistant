@@ -1,21 +1,29 @@
 import VoiceButton from "./VoiceButton";
 
-interface VoiceInputProps {
+interface ChatInputProps {
   input: string;
   onInputChange: (value: string) => void;
   onSend: () => void;
   isLoading: boolean;
+  isListening: boolean;
+  startListening: () => void;
+  stopListening: () => void;
 }
 
-export default function VoiceInput({
+export default function ChatInput({
   input,
   onInputChange,
   onSend,
   isLoading,
-}: VoiceInputProps) {
+
+  isListening,
+  startListening,
+  stopListening,
+}: ChatInputProps) {
   return (
     <footer className="border-t border-white/10 px-10 py-6">
       <div className="flex items-center gap-5 rounded-full border border-white/10 bg-[#16171D] px-6 py-4 shadow-lg">
+
         <input
           type="text"
           value={input}
@@ -31,9 +39,12 @@ export default function VoiceInput({
         />
 
         <VoiceButton
-          onSend={onSend}
           isLoading={isLoading}
+          isListening={isListening}
+          startListening={startListening}
+          stopListening={stopListening}
         />
+
       </div>
     </footer>
   );

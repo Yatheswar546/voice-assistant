@@ -2,10 +2,11 @@
 
 import AssistantHeader from "@/components/assistant/AssistantHeader";
 import ChatWindow from "@/components/chat/ChatWindow";
-import VoiceInput from "@/components/voice/VoiceInput";
+import ChatInput from "@/components/input/ChatInput";
 import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import { sendMessage } from "@/services/chat.service";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 export default function MainContent() {
 
@@ -14,6 +15,13 @@ export default function MainContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    transcript,
+    isListening,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition();
 
   const handleSendMessage = async () => {
     const trimmedMessage = input.trim();
@@ -73,11 +81,14 @@ export default function MainContent() {
         />
       </div>
 
-      <VoiceInput
+      <ChatInput
         input={input}
         onInputChange={setInput}
         onSend={handleSendMessage}
         isLoading={isLoading}
+        isListening={isListening}
+        startListening={startListening}
+        stopListening={stopListening}
       />
     </main>
   );
