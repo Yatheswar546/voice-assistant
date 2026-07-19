@@ -1,0 +1,27 @@
+Background
+
+#0B0B0F
+
+Cards
+
+#15161C
+
+Borders
+
+#26282F
+
+Text
+
+#FFFFFF
+
+Secondary Text
+
+#A0A3AD
+
+Blue Glow
+
+#5B8CFF
+
+Assistant Glow
+
+#6FA7FF
