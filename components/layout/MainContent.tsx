@@ -25,7 +25,7 @@ export default function MainContent() {
     onTranscript: setInput,
   });
 
-  const { 
+  const {
     speak,
     stop,
     isSpeaking,
@@ -79,7 +79,12 @@ export default function MainContent() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <AssistantHeader />
+      <AssistantHeader
+        isListening={isListening}
+        isLoading={isLoading}
+        isSpeaking={isSpeaking}
+        onInterrupt={stop}
+      />
 
       <div className="flex-1 overflow-hidden">
         <ChatWindow
