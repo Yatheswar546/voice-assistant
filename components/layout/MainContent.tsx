@@ -5,34 +5,17 @@ import ChatWindow from "@/components/chat/ChatWindow";
 import VoiceInput from "@/components/voice/VoiceInput";
 import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
+import { sendMessage } from "@/services/chat.service";
 
 export default function MainContent() {
 
   const [input, setInput] = useState("");
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "user",
-      message: "What is the weather like tomorrow?",
-    },
-    {
-      role: "assistant",
-      category: "Weather",
-      message:
-        "Tomorrow will be sunny with a high of 23°C (73°F). A light breeze from the west is expected.",
-    },
-    {
-      role: "user",
-      message: "Can you set a reminder for 9 AM?",
-    },
-    {
-      role: "assistant",
-      category: "Reminder",
-      message: "Okay, setting a reminder for tomorrow at 9 AM.",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  const handleSendMessage = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendMessage = async () => {
     const trimmedMessage = input.trim();
 
     if (!trimmedMessage) return;
@@ -45,6 +28,38 @@ export default function MainContent() {
     setMessages((prev) => [...prev, newMessage]);
 
     setInput("");
+
+    try {
+
+      setIsLoading(true);
+
+      const response = await sendMessage({
+        message: trimmedMessage,
+      });
+
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        message: response.reply,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      setIsLoading(false);
+
+    } catch (error) {
+
+      setIsLoading(false);
+
+      console.error(error);
+
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        message: "Sorry, something went wrong.",
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    }
+
   };
 
   return (
@@ -52,13 +67,17 @@ export default function MainContent() {
       <AssistantHeader />
 
       <div className="flex-1 overflow-hidden">
-        <ChatWindow messages={messages} />
+        <ChatWindow
+          messages={messages}
+          isLoading={isLoading}
+        />
       </div>
 
       <VoiceInput
         input={input}
         onInputChange={setInput}
         onSend={handleSendMessage}
+        isLoading={isLoading}
       />
     </main>
   );

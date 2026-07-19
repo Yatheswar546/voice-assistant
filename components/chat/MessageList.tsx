@@ -4,10 +4,12 @@ import type { ChatMessage } from "@/types/chat";
 
 interface MessageListProps {
   messages: ChatMessage[];
+  isLoading: boolean;
 }
 
 export default function MessageList({
   messages,
+  isLoading,
 }: MessageListProps) {
   return (
     <div className="space-y-12">
@@ -24,6 +26,14 @@ export default function MessageList({
             message={msg.message}
           />
         )
+      )}
+
+      {/* Loading Message */}
+      {isLoading && (
+        <AssistantMessage
+          category=""
+          message="Thinking..."
+        />
       )}
     </div>
   );
