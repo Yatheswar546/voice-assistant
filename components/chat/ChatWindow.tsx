@@ -1,9 +1,9 @@
+import MessageList from "./MessageList";
+
 export default function ChatWindow() {
   return (
-    <section className="flex h-full items-center justify-center">
-      <h2 className="text-2xl text-gray-500">
-        Chat Window
-      </h2>
+    <section className="h-full overflow-y-auto px-12 py-10">
+      <MessageList />
     </section>
   );
 }
