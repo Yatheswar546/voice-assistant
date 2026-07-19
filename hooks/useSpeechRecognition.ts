@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export function useSpeechRecognition() {
-  const [transcript, setTranscript] = useState("");
+interface UseSpeechRecognitionOptions {
+  onTranscript?: (transcript: string) => void;
+}
+
+export function useSpeechRecognition({
+  onTranscript,
+}: UseSpeechRecognitionOptions = {}) {
   const [isListening, setIsListening] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -43,7 +48,7 @@ export function useSpeechRecognition() {
       const lastResult =
         event.results[event.results.length - 1][0].transcript;
 
-      setTranscript(lastResult);
+      onTranscript?.(lastResult);
     };
 
     recognitionRef.current = recognition;
@@ -63,12 +68,10 @@ export function useSpeechRecognition() {
 
       recognitionRef.current = null;
     };
-  }, []);
+  }, [onTranscript]);
 
   const startListening = useCallback(() => {
     if (!recognitionRef.current || isListening) return;
-
-    setTranscript("");
 
     try {
       recognitionRef.current.start();
@@ -82,7 +85,6 @@ export function useSpeechRecognition() {
   }, []);
 
   return {
-    transcript,
     isListening,
     startListening,
     stopListening,

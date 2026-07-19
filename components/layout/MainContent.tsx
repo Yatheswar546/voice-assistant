@@ -3,13 +3,12 @@
 import AssistantHeader from "@/components/assistant/AssistantHeader";
 import ChatWindow from "@/components/chat/ChatWindow";
 import ChatInput from "@/components/input/ChatInput";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import { sendMessage } from "@/services/chat.service";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 export default function MainContent() {
-
   const [input, setInput] = useState("");
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -17,17 +16,12 @@ export default function MainContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   const {
-    transcript,
     isListening,
     startListening,
     stopListening,
-  } = useSpeechRecognition();
-
-  useEffect(() => {
-    if (transcript) {
-      setInput(transcript);
-    }
-  }, [transcript]);
+  } = useSpeechRecognition({
+    onTranscript: setInput,
+  });
 
   const handleSendMessage = async () => {
     const trimmedMessage = input.trim();
@@ -44,7 +38,6 @@ export default function MainContent() {
     setInput("");
 
     try {
-
       setIsLoading(true);
 
       const response = await sendMessage({
@@ -59,9 +52,7 @@ export default function MainContent() {
       setMessages((prev) => [...prev, assistantMessage]);
 
       setIsLoading(false);
-
     } catch (error) {
-
       setIsLoading(false);
 
       console.error(error);
@@ -73,7 +64,6 @@ export default function MainContent() {
 
       setMessages((prev) => [...prev, assistantMessage]);
     }
-
   };
 
   return (

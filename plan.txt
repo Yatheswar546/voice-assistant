@@ -13,15 +13,15 @@ Build the bottom input ✅
 Make the UI responsive
 
 Phase 2: Voice UI
-Add microphone button states
-Add listening animation
+Add microphone button states ✅
+Add listening animation 
 Add speaking animation
 Add typing indicator
 
 Phase 3: Backend Integration
 Connect the chat to your AI backend ✅
 Add streaming responses ✅
-Connect speech-to-text
+Connect speech-to-text ✅
 Connect text-to-speech
 
 Phase 4: Production Features
@@ -55,8 +55,8 @@ Next we'll make the UI actually work.
 
 Module 3: Voice
 
-⬜ Speech → Text
-⬜ Text → Gemini
+✅ Speech → Text
+✅ Text → Gemini
 ⬜ Gemini → Text
 ⬜ Text → Speech
 
