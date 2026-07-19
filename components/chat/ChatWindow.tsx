@@ -1,9 +1,16 @@
 import MessageList from "./MessageList";
+import type { ChatMessage } from "@/types/chat";
 
-export default function ChatWindow() {
+interface ChatWindowProps {
+  messages: ChatMessage[];
+}
+
+export default function ChatWindow({
+  messages,
+}: ChatWindowProps) {
   return (
     <section className="h-full overflow-y-auto px-12 py-10">
-      <MessageList />
+      <MessageList messages={messages} />
     </section>
   );
 }
