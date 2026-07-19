@@ -7,8 +7,10 @@ import { useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import { sendMessage } from "@/services/chat.service";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 
 export default function MainContent() {
+
   const [input, setInput] = useState("");
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -22,6 +24,12 @@ export default function MainContent() {
   } = useSpeechRecognition({
     onTranscript: setInput,
   });
+
+  const { 
+    speak,
+    stop,
+    isSpeaking,
+  } = useSpeechSynthesis();
 
   const handleSendMessage = async () => {
     const trimmedMessage = input.trim();
@@ -40,18 +48,21 @@ export default function MainContent() {
     try {
       setIsLoading(true);
 
-      const response = await sendMessage({
+      const assistantResponse = await sendMessage({
         message: trimmedMessage,
       });
 
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        message: response.reply,
+        message: assistantResponse.reply,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
 
+      speak(assistantResponse.reply);
+
       setIsLoading(false);
+
     } catch (error) {
       setIsLoading(false);
 
