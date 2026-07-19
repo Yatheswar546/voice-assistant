@@ -6,10 +6,10 @@ Phase 1: Static UI
 Create the Next.js project structure ✅
 Set up Tailwind CSS and shadcn/ui ✅
 Build the dark layout ✅
-Create the sidebar 
-Create the header
-Create chat bubbles
-Build the bottom input
+Create the sidebar ✅
+Create the header ✅
+Create chat bubbles ✅
+Build the bottom input ✅
 Make the UI responsive
 
 Phase 2: Voice UI
@@ -30,3 +30,120 @@ Authentication
 Database
 Settings
 Deploy to production
+
+========================================================================
+
+Updated Roadmap
+✅ Module 1: UI
+✅ Layout
+✅ Sidebar
+✅ Header
+✅ Chat
+✅ Voice Input
+
+Completed 🎉
+
+Module 2: Frontend Logic
+
+Next we'll make the UI actually work.
+
+⬜ Send text message
+⬜ Receive AI response
+⬜ Display conversation
+⬜ Loading state
+⬜ Error state
+
+Module 3: Voice
+
+⬜ Speech → Text
+⬜ Text → Gemini
+⬜ Gemini → Text
+⬜ Text → Speech
+
+Module 4: Backend
+
+⬜ Next.js API Routes
+⬜ Gemini API
+⬜ Environment Variables
+
+Module 5: Database
+
+⬜ MongoDB
+⬜ Save Sessions
+⬜ Load Sessions
+⬜ Delete Sessions
+
+Module 6: Production
+
+⬜ Deploy
+⬜ Test
+⬜ Fix Bugs
+
+========================================================================
+
+Step 1
+✔ Gemini API Key
+✔ Environment Variables
+
+↓
+
+Step 2
+✔ Gemini Client
+
+↓
+
+Step 3
+✔ API Route
+
+↓
+
+Step 4
+✔ Frontend calls API
+
+↓
+
+Step 5
+✔ Show AI response
+
+↓
+
+Step 6
+✔ Loading
+
+↓
+
+Step 7
+✔ Error Handling
+
+========================================================================
+
+Architecture
+
+ChatInput
+      │
+      ▼
+handleSend()
+      │
+      ▼
+POST /api/chat
+      │
+      ▼
+route.ts
+      │
+      ▼
+lib/gemini.ts
+      │
+      ▼
+Google Gemini API
+      │
+      ▼
+AI Response
+      │
+      ▼
+route.ts
+      │
+      ▼
+Frontend
+      │
+      ▼
+Chat Messages
