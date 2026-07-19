@@ -3,7 +3,7 @@
 import AssistantHeader from "@/components/assistant/AssistantHeader";
 import ChatWindow from "@/components/chat/ChatWindow";
 import ChatInput from "@/components/input/ChatInput";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import { sendMessage } from "@/services/chat.service";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
@@ -22,6 +22,12 @@ export default function MainContent() {
     startListening,
     stopListening,
   } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (transcript) {
+      setInput(transcript);
+    }
+  }, [transcript]);
 
   const handleSendMessage = async () => {
     const trimmedMessage = input.trim();
