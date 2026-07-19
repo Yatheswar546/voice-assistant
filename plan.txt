@@ -19,8 +19,8 @@ Add speaking animation
 Add typing indicator
 
 Phase 3: Backend Integration
-Connect the chat to your AI backend 
-Add streaming responses
+Connect the chat to your AI backend ✅
+Add streaming responses ✅
 Connect speech-to-text
 Connect text-to-speech
 
@@ -47,11 +47,11 @@ Module 2: Frontend Logic
 
 Next we'll make the UI actually work.
 
-⬜ Send text message
-⬜ Receive AI response
-⬜ Display conversation
-⬜ Loading state
-⬜ Error state
+✅ Send text message
+✅ Receive AI response
+✅ Display conversation
+✅ Loading state
+✅ Error state
 
 Module 3: Voice
 
