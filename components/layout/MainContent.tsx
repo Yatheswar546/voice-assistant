@@ -32,6 +32,10 @@ export default function MainContent() {
   } = useSpeechSynthesis();
 
   const handleSendMessage = async () => {
+
+    // Prevent duplicate requests
+    if (isLoading) return;
+
     const trimmedMessage = input.trim();
 
     if (!trimmedMessage) return;
@@ -42,12 +46,10 @@ export default function MainContent() {
     };
 
     setMessages((prev) => [...prev, newMessage]);
-
     setInput("");
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-
       const assistantResponse = await sendMessage({
         message: trimmedMessage,
       });
@@ -61,10 +63,7 @@ export default function MainContent() {
 
       speak(assistantResponse.reply);
 
-      setIsLoading(false);
-
     } catch (error) {
-      setIsLoading(false);
 
       console.error(error);
 
@@ -74,6 +73,9 @@ export default function MainContent() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+    
+    } finally {
+        setIsLoading(false);
     }
   };
 
