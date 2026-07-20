@@ -14,8 +14,8 @@ Make the UI responsive
 
 Phase 2: Voice UI
 Add microphone button states ✅
-Add listening animation 
-Add speaking animation
+Add listening animation ✅
+Add speaking animation ✅
 Add typing indicator
 
 Phase 3: Backend Integration
@@ -150,13 +150,13 @@ Chat Messages
 
 ========================================================================
 
-🎨 Better Assistant Status UI
+🎨 Better Assistant Status UI ✅
 📜 Auto Scroll Chat  ✅
 🚫 Prevent Duplicate Requests
 ❌ Robust Error Handling
 🎤 Voice Settings
 🚪 Exit / Reset
-💬 Typing Animation
+💬 Typing Animation ✅
 ⚡ Streaming Gemini Responses
 🧠 Conversation Memory
 📄 Document Upload + RAG

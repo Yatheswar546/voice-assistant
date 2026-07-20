@@ -1,6 +1,7 @@
 import AssistantMessage from "./AssistantMessage";
 import UserMessage from "./UserMessage";
 import type { ChatMessage } from "@/types/chat";
+import LoadingMessage from "./LoadingMessage";
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -29,12 +30,7 @@ export default function MessageList({
       )}
 
       {/* Loading Message */}
-      {isLoading && (
-        <AssistantMessage
-          category=""
-          message="Thinking..."
-        />
-      )}
+      {isLoading && <LoadingMessage /> }
     </div>
   );
 }

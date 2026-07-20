@@ -1,4 +1,4 @@
-import GlowOrb from "../common/GlowOrb";
+import AssistantBubble from "../assistant/AssistantBubble";
 import CategoryBadge from "./CategoryBadge";
 
 interface AssistantMessageProps {
@@ -11,16 +11,14 @@ export default function AssistantMessage({
   message,
 }: AssistantMessageProps) {
   return (
-    <div className="flex items-start gap-5">
-      <GlowOrb />
-
-      <div className="space-y-3">
+    <AssistantBubble>
+      {category && (
         <CategoryBadge label={category} />
+      )}
 
-        <p className="max-w-2xl text-xl leading-8 text-white">
-          {message}
-        </p>
-      </div>
-    </div>
+      <p className="mt-3 whitespace-pre-wrap text-lg leading-8 text-white">
+        {message}
+      </p>
+    </AssistantBubble>
   );
 }
