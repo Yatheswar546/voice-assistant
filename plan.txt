@@ -1,6 +1,4 @@
-yatheswar_db_user - 1V9oDoSfNzKBW16R
 
-mongodb+srv://yatheswar546_db_user:1V9oDoSfNzKBW16R@cluster0.evhznux.mongodb.net/?appName=Cluster0
 =================================================================
 
 Initial Roadmap
