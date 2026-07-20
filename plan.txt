@@ -152,7 +152,7 @@ Chat Messages
 
 🎨 Better Assistant Status UI ✅
 📜 Auto Scroll Chat  ✅
-🚫 Prevent Duplicate Requests
+🚫 Prevent Duplicate Requests 
 ❌ Robust Error Handling
 🎤 Voice Settings
 🚪 Exit / Reset

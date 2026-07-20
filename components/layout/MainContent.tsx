@@ -69,13 +69,16 @@ export default function MainContent() {
 
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        message: "Sorry, something went wrong.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unexpected error occurred.",
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    
+
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
