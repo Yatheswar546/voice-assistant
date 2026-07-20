@@ -4,6 +4,8 @@ import RateSlider from "./RateSlider";
 import PitchSlider from "./PitchSlider";
 import VolumeSlider from "./VolumeSlider";
 import AutoSpeakToggle from "./AutoSpeakToggle";
+import PreviewButton from "./PreviewButton";
+import ResetVoiceButton from "./ResetVoiceButton";
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -51,7 +53,7 @@ export default function SettingsPanel({
         </button>
       </div>
 
-      <div className="p-6">
+      <div className="space-y-5 p-6">
         <VoiceSelector voices={voices} />
 
         <RateSlider />
@@ -61,6 +63,10 @@ export default function SettingsPanel({
         <VolumeSlider />
 
         <AutoSpeakToggle />
+
+        <PreviewButton />
+
+        <ResetVoiceButton />
 
       </div>
     </div>
