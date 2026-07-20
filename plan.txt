@@ -1,3 +1,10 @@
+PS E:\voice-assistant> node -v
+v24.14.0
+PS E:\voice-assistant> npm -v
+9.5.1
+PS E:\voice-assistant> 
+
+node test-mongodb.js
 
 =================================================================
 
