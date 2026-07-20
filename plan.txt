@@ -154,7 +154,7 @@ Chat Messages
 📜 Auto Scroll Chat  ✅
 🚫 Prevent Duplicate Requests ✅
 ❌ Robust Error Handling ✅
-🎤 Voice Settings
+🎤 Voice Settings ✅
 🚪 Exit / Reset
 💬 Typing Animation 
 ⚡ Streaming Gemini Responses

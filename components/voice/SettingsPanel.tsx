@@ -11,16 +11,20 @@ interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   voices: SpeechSynthesisVoice[];
+  speak: (text: string) => void;
+  stop: () => void;
+  isSpeaking: boolean;
 }
 
 export default function SettingsPanel({
   isOpen,
   onClose,
-  // voices,
+  voices,
+  speak,
+  stop,
+  isSpeaking,
 }: SettingsPanelProps) {
 
-  const { voices } = useSpeechSynthesis();
-  
   return (
 
     <div
@@ -36,10 +40,9 @@ export default function SettingsPanel({
         transition-transform
         duration-300
         z-50
-        ${
-          isOpen
-            ? "translate-x-0"
-            : "translate-x-full"
+        ${isOpen
+          ? "translate-x-0"
+          : "translate-x-full"
         }
       `}
     >
@@ -64,7 +67,11 @@ export default function SettingsPanel({
 
         <AutoSpeakToggle />
 
-        <PreviewButton />
+        <PreviewButton
+          speak={speak}
+          stop={stop}
+          isSpeaking={isSpeaking}
+        />
 
         <ResetVoiceButton />
 

@@ -100,6 +100,9 @@ export default function MainContent() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         voices={voices}
+        speak={speak}
+        stop={stop}
+        isSpeaking={isSpeaking}
       />
 
       <div className="flex-1 overflow-hidden">

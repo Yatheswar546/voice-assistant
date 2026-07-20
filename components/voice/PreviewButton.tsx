@@ -1,13 +1,23 @@
 "use client";
 
-import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+interface PreviewButtonProps {
+  speak: (text: string) => void;
+  stop: () => void;
+  isSpeaking: boolean;
+}
 
-export default function PreviewButton() {
-  const { speak, isSpeaking } = useSpeechSynthesis();
+export default function PreviewButton({
+  speak,
+  stop,
+  isSpeaking,
+}: PreviewButtonProps) {
 
   const handlePreview = () => {
+
+    stop();
+
     speak(
-      "Hello! This is a preview of your current voice settings."
+      "Hello! This is how I will sound with your current voice settings."
     );
   };
 
