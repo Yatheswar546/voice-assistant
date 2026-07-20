@@ -47,12 +47,12 @@ export default function AssistantHeader({
           Interrupt
         </button>
 
-        <button className="rounded-full border border-white/20 px-6 py-2 transition hover:border-blue-400 hover:bg-white/5">
+        {/* <button className="rounded-full border border-white/20 px-6 py-2 transition hover:border-blue-400 hover:bg-white/5">
           Exit
-        </button>
+        </button> */}
 
         <button className="rounded-full border border-red-500 px-6 py-2 text-red-400 transition hover:bg-red-500/10">
-          Quit
+          Logout
         </button>
 
         <button
