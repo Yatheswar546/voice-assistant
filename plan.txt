@@ -152,11 +152,11 @@ Chat Messages
 
 🎨 Better Assistant Status UI ✅
 📜 Auto Scroll Chat  ✅
-🚫 Prevent Duplicate Requests 
-❌ Robust Error Handling
+🚫 Prevent Duplicate Requests ✅
+❌ Robust Error Handling ✅
 🎤 Voice Settings
 🚪 Exit / Reset
-💬 Typing Animation ✅
+💬 Typing Animation 
 ⚡ Streaming Gemini Responses
 🧠 Conversation Memory
 📄 Document Upload + RAG
