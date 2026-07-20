@@ -1,8 +1,8 @@
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import VoiceSelector from "./VoiceSelector";
 import RateSlider from "./RateSlider";
-import PitchSlider
- from "./PitchSlider";
+import PitchSlider from "./PitchSlider";
+import VolumeSlider from "./VolumeSlider";
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -56,6 +56,8 @@ export default function SettingsPanel({
         <RateSlider />
 
         <PitchSlider />
+
+        <VolumeSlider />
 
       </div>
     </div>
