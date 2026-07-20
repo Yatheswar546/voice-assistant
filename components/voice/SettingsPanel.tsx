@@ -3,6 +3,7 @@ import VoiceSelector from "./VoiceSelector";
 import RateSlider from "./RateSlider";
 import PitchSlider from "./PitchSlider";
 import VolumeSlider from "./VolumeSlider";
+import AutoSpeakToggle from "./AutoSpeakToggle";
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -58,6 +59,8 @@ export default function SettingsPanel({
         <PitchSlider />
 
         <VolumeSlider />
+
+        <AutoSpeakToggle />
 
       </div>
     </div>
