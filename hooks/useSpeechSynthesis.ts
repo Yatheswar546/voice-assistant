@@ -11,15 +11,24 @@ export function useSpeechSynthesis() {
 
   useEffect(() => {
     const loadVoices = () => {
-      setVoices(window.speechSynthesis.getVoices());
+      const availableVoices = window.speechSynthesis.getVoices();
+      setVoices(availableVoices);
     };
 
     loadVoices();
 
     window.speechSynthesis.onvoiceschanged = loadVoices;
 
+    window.speechSynthesis.addEventListener(
+      "voiceschanged",
+      loadVoices
+    );
+
     return () => {
-      window.speechSynthesis.onvoiceschanged = null;
+      window.speechSynthesis.removeEventListener(
+        "voiceschanged",
+        loadVoices
+      );
     };
   }, []);
 

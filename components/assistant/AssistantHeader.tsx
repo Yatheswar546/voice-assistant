@@ -5,6 +5,7 @@ interface AssistantHeaderProps {
   isLoading: boolean;
   isSpeaking: boolean;
   onInterrupt: () => void;
+  onOpenSettings: () => void;
 }
 
 export default function AssistantHeader({
@@ -12,7 +13,8 @@ export default function AssistantHeader({
   isLoading,
   isSpeaking,
   onInterrupt,
-}: AssistantHeaderProps) {  
+  onOpenSettings,
+}: AssistantHeaderProps) {
 
   const status = isListening
     ? "listening"
@@ -37,11 +39,11 @@ export default function AssistantHeader({
 
       {/* Right */}
       <div className="flex items-center gap-4">
-        <button 
+        <button
           className="rounded-full border border-white/20 px-6 py-2 transition hover:border-blue-400 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onInterrupt}
           disabled={!isSpeaking}
-        >  
+        >
           Interrupt
         </button>
 
@@ -51,6 +53,14 @@ export default function AssistantHeader({
 
         <button className="rounded-full border border-red-500 px-6 py-2 text-red-400 transition hover:bg-red-500/10">
           Quit
+        </button>
+
+        <button
+          onClick={onOpenSettings}
+          aria-label="Settings"
+          className="rounded-full border border-white/20 px-6 py-2 transition hover:border-blue-400 hover:bg-white/5"
+        >
+          ⚙️ Settings
         </button>
       </div>
     </header>

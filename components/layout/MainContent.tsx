@@ -8,6 +8,7 @@ import type { ChatMessage } from "@/types/chat";
 import { sendMessage } from "@/services/chat.service";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import SettingsPanel from "../voice/SettingsPanel";
 
 export default function MainContent() {
 
@@ -16,6 +17,8 @@ export default function MainContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const {
     isListening,
@@ -29,6 +32,7 @@ export default function MainContent() {
     speak,
     stop,
     isSpeaking,
+    voices,
   } = useSpeechSynthesis();
 
   const handleSendMessage = async () => {
@@ -89,6 +93,13 @@ export default function MainContent() {
         isLoading={isLoading}
         isSpeaking={isSpeaking}
         onInterrupt={stop}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        voices={voices}
       />
 
       <div className="flex-1 overflow-hidden">
