@@ -7,12 +7,16 @@ export async function POST() {
         // Connect to MongoDB
         await connectDB();
 
+        console.log("Before creation ");
+        
         // Create a test user
         const user = await User.create({
             name: "Test User",
             email: "test@example.com",
             password: "password123",
         });
+
+        console.log("User: ", user);
 
         // Return success response
         return NextResponse.json(

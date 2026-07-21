@@ -533,7 +533,7 @@ Next.js
 ↓
 MongoDB Atlas
 
-b) Create collections
+✅ b) Create collections
 Users
 Chat Sessions
 Messages
@@ -555,6 +555,7 @@ Logout
 JWT
 Password Hashing
 Protected Routes
+Authentication Middleware
 
 Phase 4 - Chat Persistence:
 
@@ -667,7 +668,7 @@ Deployment
 
 ==================================================================================
 
-Recommended tools
+Recommended tools for remaining Backend Work and Deployment
 
 | Purpose                | Tool                   | Why                                                              |
 | ---------------------- | ---------------------- | ---------------------------------------------------------------- |
@@ -678,3 +679,19 @@ Recommended tools
 | AI                     | Official Gemini SDK    | Already integrated in your project                               |
 | API                    | Next.js Route Handlers | Built into Next.js 15, no need for Express                       |
 
+
+==================================================================================
+
+Recommended tools for entire Project
+
+| Purpose        | Tool                   | Why                                                              |
+| -------------- | ---------------------- | ---------------------------------------------------------------- |
+| Frontend       | Next.js                | Modern React framework with built-in backend support             |
+| Language       | TypeScript             | Type safety and better developer experience                      |
+| Styling        | Tailwind CSS           | Fast, utility-first CSS framework                                |
+| Database       | MongoDB Atlas          | Cloud-hosted, free tier, industry standard                       |
+| ODM            | Mongoose               | Simplifies working with MongoDB using models and validation      |
+| Authentication | JWT                    | Great for learning backend fundamentals before exploring Auth.js |
+| AI             | Google Gemini SDK      | Official SDK already integrated into the project                 |
+| API            | Next.js Route Handlers | Built into Next.js App Router, no separate Express server needed |
+| Deployment     | Vercel                 | Best fit for Next.js applications                                |
