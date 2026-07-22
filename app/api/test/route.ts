@@ -11,9 +11,9 @@ export async function POST() {
         
         // Create a test user
         const user = await User.create({
-            name: "Test User",
-            email: "test@example.com",
-            password: "password123",
+            name: "Test User 2",
+            email: "test2@example.com",
+            password: "password12345",
         });
 
         console.log("User: ", user);

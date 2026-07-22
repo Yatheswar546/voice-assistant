@@ -539,7 +539,7 @@ Chat Sessions
 Messages
 Voice Settings
 
-c) Then test
+✅ c) Then test
 GET
 POST
 Database Connection
@@ -695,3 +695,34 @@ Recommended tools for entire Project
 | AI             | Google Gemini SDK      | Official SDK already integrated into the project                 |
 | API            | Next.js Route Handlers | Built into Next.js App Router, no separate Express server needed |
 | Deployment     | Vercel                 | Best fit for Next.js applications                                |
+
+==================================================================================
+==================================================================================
+
+Updated Authentication Roadmap
+
+Authentication Fundamentals
+        ↓
+Password Hashing (bcrypt)
+        ↓
+Zod Validation
+        ↓
+Register API
+        ↓
+Login API
+        ↓
+JWT
+        ↓
+Authentication Middleware
+        ↓
+Protected Routes
+        ↓
+Register UI
+        ↓
+Login UI
+        ↓
+Persistent Authentication
+        ↓
+Logout
+        ↓
+Current User (/api/auth/me)
