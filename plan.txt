@@ -717,15 +717,15 @@ Updated Authentication Roadmap
         ↓
 ✅Protected Routes
         ↓
+✅Current User (/api/auth/me)
+        ↓
+✅Logout
+        ↓
 Register UI
         ↓
 Login UI
         ↓
 Persistent Authentication
-        ↓
-Logout
-        ↓
-Current User (/api/auth/me)
 
 =====================================
 
