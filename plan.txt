@@ -726,3 +726,22 @@ Persistent Authentication
 Logout
         ↓
 Current User (/api/auth/me)
+
+=====================================
+
+Each folder has one job:
+
+models/
+    Database Structure
+
+services/
+    Business Logic
+
+schemas/
+    Request Validation
+
+lib/
+    Reusable Utilities
+
+app/api/
+    HTTP Request Handling
