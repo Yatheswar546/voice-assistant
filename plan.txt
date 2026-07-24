@@ -715,7 +715,7 @@ Updated Authentication Roadmap
         ↓
 ✅Authentication Middleware
         ↓
-Protected Routes
+✅Protected Routes
         ↓
 Register UI
         ↓

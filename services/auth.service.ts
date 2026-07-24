@@ -79,3 +79,16 @@ export async function loginUser(data: LoginInput) {
     },
   };
 }
+
+/**
+ * Get user by ID
+*/
+export async function getUserById(userId: string) {
+  const user = await User.findById(userId).select("-password");
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+}

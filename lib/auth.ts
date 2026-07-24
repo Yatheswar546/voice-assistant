@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 
 /**
  * Payload stored inside the JWT
@@ -33,4 +34,19 @@ export function generateToken(payload: JwtPayload): string {
  */
 export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET) as JwtPayload;
+}
+
+/**
+ * Returns the authenticated user's JWT payload
+*/
+export async function getAuthenticatedUser() {
+  const cookieStore = await cookies();
+
+  const token = cookieStore.get("auth-token")?.value;
+
+  if (!token) {
+    throw new Error("Unauthorized");
+  }
+
+  return verifyToken(token);
 }
