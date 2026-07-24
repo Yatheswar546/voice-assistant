@@ -701,13 +701,13 @@ Recommended tools for entire Project
 
 Updated Authentication Roadmap
 
-Authentication Fundamentals
+✅Authentication Fundamentals
         ↓
-Password Hashing (bcrypt)
+✅Password Hashing (bcrypt)
         ↓
-Zod Validation
+✅Zod Validation
         ↓
-Register API
+✅Register API
         ↓
 Login API
         ↓
