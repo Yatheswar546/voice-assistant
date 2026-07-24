@@ -709,11 +709,11 @@ Updated Authentication Roadmap
         ↓
 ✅Register API
         ↓
-Login API
+✅Login API
         ↓
-JWT
+✅JWT
         ↓
-Authentication Middleware
+✅Authentication Middleware
         ↓
 Protected Routes
         ↓

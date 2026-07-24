@@ -6,6 +6,9 @@ import { LoginSchema } from "@/schemas/auth.schema";
 import { loginUser } from "@/services/auth.service";
 
 export async function POST(request: NextRequest) {
+
+  console.log("🔥 LOGIN ROUTE HIT");
+
   try {
     await connectDB();
 
@@ -15,12 +18,15 @@ export async function POST(request: NextRequest) {
 
     const result = await loginUser(validatedData);
 
+    console.log(result.token);
+
     const response = NextResponse.json(
       {
         success: true,
         message: "Login successful.",
         data: {
             user: result.user,
+            token: result.token,
         },
       },
       {
@@ -39,6 +45,8 @@ export async function POST(request: NextRequest) {
         path: "/",
     });
 
+    console.log("🔥 Returning response with cookie");
+    
     return response;
 
   } catch (error) {
