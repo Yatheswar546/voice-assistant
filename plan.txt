@@ -721,62 +721,28 @@ Updated Authentication Roadmap
         ↓
 ✅Logout
         ↓
+✅Create AuthContext.
+        ↓
+✅Create the useAuth() hook.
+        ↓
+✅Persistent Authentication /api/auth/me
+        ↓
 Register UI
         ↓
 Login UI
-        ↓
-Create AuthContext.
-        ↓
-Create the useAuth() hook.
-        ↓
-Persistent Authentication /api/auth/me
-        ↓
-Protect frontend pages.
-        ↓
-Create a reusable authentication guard.
-        ↓
-Add middleware.ts as the final optimization.
 
 =====================================
 
-Detailed plan for Authentication UI
+Remaining features to add in future during sidebar functionalities
 
-Phase 1: Authentication Foundation
-Create AuthContext
-Create useAuth
-Load the logged-in user using /api/auth/me
-Provide authentication state throughout the app
-
-At the end of this phase, we'll know whether a user is logged in without any UI changes.
-
-Phase 2: Login Dialog
-Build the Login dialog using shadcn/ui's Dialog
-Integrate React Hook Form
-Add Zod validation
-Call the Login API
-Close the dialog after a successful login
-Update AuthContext
-
-Phase 3: Register Dialog
-Build the Register dialog
-Integrate React Hook Form
-Add validation
-Call the Register API
-Automatically log the user in after successful registration (or switch back to the login dialog if you prefer that flow)
-
-Phase 4: Header Integration
-Replace the hardcoded Logout button with AuthButton
-Show Login or Logout based on authentication state
-Display the user's information later if desired
-
-Phase 5: Protected Features
+Protected Features:
 Protect "New Session"
 Protect /api/chat
 Load the user's sessions
 Display chat history
 Ensure only authenticated users can create new conversations
 
-Phase 6: Middleware (Optional)
+Middleware (Optional):
 Add middleware.ts
 Redirect unauthenticated users before rendering protected routes
 Keep public routes like the home page accessible

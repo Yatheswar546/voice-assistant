@@ -1,4 +1,5 @@
 import AssistantStatus from "./AssistantStatus";
+import AuthButton from "../auth/AuthButton";
 
 interface AssistantHeaderProps {
   isListening: boolean;
@@ -47,9 +48,11 @@ export default function AssistantHeader({
           Interrupt
         </button>
 
-        <button className="rounded-full border border-red-500 px-6 py-2 text-red-400 transition hover:bg-red-500/10">
+        {/* <button className="rounded-full border border-red-500 px-6 py-2 text-red-400 transition hover:bg-red-500/10">
           Logout
-        </button>
+        </button> */}
+
+        <AuthButton />
 
         <button
           onClick={onOpenSettings}
