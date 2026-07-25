@@ -18,15 +18,14 @@ export async function POST(request: NextRequest) {
 
     const result = await loginUser(validatedData);
 
-    console.log(result.token);
-
     const response = NextResponse.json(
       {
         success: true,
         message: "Login successful.",
         data: {
-            user: result.user,
-            token: result.token,
+            id: result.id,
+            name: result.name,
+            email: result.email,
         },
       },
       {
