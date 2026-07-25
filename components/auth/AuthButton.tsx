@@ -53,6 +53,8 @@ export default function AuthButton() {
       <>
         <Button
           onClick={() => setLoginOpen(true)}
+          variant="outline"
+          className="h-11 rounded-full border-blue-500 px-6 text-base text-white hover:border-blue-400 hover:bg-blue-500/10"
         >
           Login
         </Button>
@@ -87,7 +89,7 @@ export default function AuthButton() {
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="gap-2"
+            className="h-11 gap-2 rounded-full border-white/15 bg-transparent px-5 text-base text-white hover:border-blue-400 hover:bg-white/5"
           >
             <User className="h-4 w-4" />
 
@@ -99,14 +101,14 @@ export default function AuthButton() {
 
                 <DropdownMenuContent
           align="end"
-          className="w-56"
+          className="w-64 border border-white/15 bg-[#111217] p-2 text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)]"
         >
           <div className="px-2 py-2">
             <p className="font-medium">
               {user?.name}
             </p>
 
-            <p className="text-sm text-muted-foreground truncate">
+            <p className="truncate text-sm text-slate-400">
               {user?.email}
             </p>
           </div>
@@ -115,7 +117,7 @@ export default function AuthButton() {
 
           <DropdownMenuItem
             onClick={handleLogout}
-            className="cursor-pointer text-red-600 focus:text-red-600"
+            className="cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-400"
           >
             <LogOut className="mr-2 h-4 w-4" />
             Logout

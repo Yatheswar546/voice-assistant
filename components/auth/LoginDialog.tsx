@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { isAxiosError } from "axios";
 import { toast } from "sonner";
 
 import { useForm } from "react-hook-form";
@@ -75,9 +76,11 @@ export default function LoginDialog({
 
       router.push("/assistant");
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(
-        error?.response?.data?.message ??
+        (isAxiosError<{ message?: string }>(error)
+          ? error.response?.data?.message
+          : undefined) ??
           "Login failed."
       );
     }
@@ -97,7 +100,7 @@ export default function LoginDialog({
         {/* ---------------------- Email ---------------------- */}
 
         <div className="space-y-2">
-          <Label htmlFor="email">
+          <Label className="text-slate-200" htmlFor="email">
             Email Address
           </Label>
 
@@ -105,11 +108,12 @@ export default function LoginDialog({
             id="email"
             type="email"
             placeholder="john@example.com"
+            className="h-12 rounded-xl border-white/15 bg-white/[0.03] px-4 text-white placeholder:text-slate-500 focus-visible:border-blue-400"
             {...register("email")}
           />
 
           {errors.email && (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-red-400">
               {errors.email.message}
             </p>
           )}
@@ -118,7 +122,7 @@ export default function LoginDialog({
                 {/* ---------------------- Password ---------------------- */}
 
         <div className="space-y-2">
-          <Label htmlFor="password">
+          <Label className="text-slate-200" htmlFor="password">
             Password
           </Label>
 
@@ -127,6 +131,7 @@ export default function LoginDialog({
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
+              className="h-12 rounded-xl border-white/15 bg-white/[0.03] px-4 pr-12 text-white placeholder:text-slate-500 focus-visible:border-blue-400"
               {...register("password")}
             />
 
@@ -135,7 +140,7 @@ export default function LoginDialog({
               onClick={() =>
                 setShowPassword(!showPassword)
               }
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-white"
             >
               {showPassword ? (
                 <EyeOff size={18} />
@@ -146,7 +151,7 @@ export default function LoginDialog({
           </div>
 
           {errors.password && (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-red-400">
               {errors.password.message}
             </p>
           )}
@@ -156,7 +161,7 @@ export default function LoginDialog({
 
         <Button
           type="submit"
-          className="w-full"
+          className="h-12 w-full rounded-xl bg-[#2f7df6] text-base text-white shadow-[0_10px_25px_rgba(47,125,246,0.25)] hover:bg-[#3e8aff]"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -171,15 +176,15 @@ export default function LoginDialog({
 
         {/* ---------------------- Footer ---------------------- */}
 
-        <div className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
+        <div className="text-center text-sm text-slate-400">
+          Don&apos;t have an account?{" "}
           <button
             type="button"
             onClick={() => {
               onOpenChange(false);
               onRegisterClick();
             }}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-blue-400 hover:text-blue-300 hover:underline"
           >
             Register
           </button>

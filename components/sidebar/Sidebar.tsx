@@ -15,7 +15,7 @@ const earlierSessions = [
 
 export default function Sidebar() {
   return (
-    <aside className="m-4 flex h-[calc(100vh-2rem)] w-80 flex-col rounded-3xl border border-white/10 bg-[#111217] p-6">
+    <aside className="m-4 hidden h-[calc(100vh-2rem)] w-80 shrink-0 flex-col rounded-3xl border border-white/10 bg-[#111217] p-6 lg:flex">
       {/* Logo */}
       <Logo />
 

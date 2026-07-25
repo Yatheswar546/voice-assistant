@@ -1,4 +1,4 @@
-import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { X } from "lucide-react";
 import VoiceSelector from "./VoiceSelector";
 import RateSlider from "./RateSlider";
 import PitchSlider from "./PitchSlider";
@@ -24,57 +24,31 @@ export default function SettingsPanel({
   stop,
   isSpeaking,
 }: SettingsPanelProps) {
-
   return (
-
     <div
-      className={`
-        fixed
-        top-0
-        right-0
-        h-screen
-        w-full
-        max-w-md
-        bg-[#202127]
-        shadow-xl
-        transition-transform
-        duration-300
-        z-50
-        ${isOpen
-          ? "translate-x-0"
-          : "translate-x-full"
-        }
-      `}
+      className={`fixed top-0 right-0 z-50 h-screen w-full max-w-md border-l border-white/10 bg-[#111217] shadow-[-20px_0_60px_rgba(0,0,0,0.35)] transition-transform duration-300 ${
+        isOpen ? "translate-x-0" : "translate-x-full"
+      }`}
     >
-      <div className="flex items-center justify-between p-6 border-b">
-        <h2 className="text-xl font-semibold">
-          Settings
-        </h2>
-
-        <button onClick={onClose}>
-          ✕
+      <div className="flex items-center justify-between border-b border-white/10 p-6">
+        <h2 className="text-2xl font-semibold">Settings</h2>
+        <button
+          onClick={onClose}
+          aria-label="Close settings"
+          className="rounded-full border border-white/15 p-2 text-slate-300 transition hover:border-blue-400 hover:text-white"
+        >
+          <X size={18} />
         </button>
       </div>
 
       <div className="space-y-5 p-6">
         <VoiceSelector voices={voices} />
-
         <RateSlider />
-
         <PitchSlider />
-
         <VolumeSlider />
-
         <AutoSpeakToggle />
-
-        <PreviewButton
-          speak={speak}
-          stop={stop}
-          isSpeaking={isSpeaking}
-        />
-
+        <PreviewButton speak={speak} stop={stop} isSpeaking={isSpeaking} />
         <ResetVoiceButton />
-
       </div>
     </div>
   );

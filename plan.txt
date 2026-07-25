@@ -504,7 +504,7 @@ This roadmap keeps **Version 1.0** focused, achievable, and suitable for a resum
 
 (Detailed Recommended plan for Remaining works)
 
-Phase 1 - Backend Foundation : 
+✅ Phase 1 - Backend Foundation : 
 Before writing login pages, let's prepare the backend.
 
 Tasks:
@@ -526,7 +526,7 @@ middleware (optional)
 
 This becomes the backbone of the whole project.
 
-Phase 2 - MongoDB Integration:
+✅ Phase 2 - MongoDB Integration:
 
 ✅ a) Connect:
 Next.js
@@ -545,17 +545,17 @@ POST
 Database Connection
 Error Handling
 
-Phase 3 - Authentication:
+✅ Phase 3 - Authentication:
 
 Only after the database works. We'll implement
 
-Register
-Login
-Logout
-JWT
-Password Hashing
-Protected Routes
-Authentication Middleware
+✅ Register
+✅ Login
+✅ Logout
+✅ JWT
+✅ Password Hashing
+Protected Routes - will be implemented in future after sidebar functionality
+Authentication Middleware - will be implemented in future after sidebar functionality
 
 Phase 4 - Chat Persistence:
 
@@ -646,11 +646,11 @@ Testing
         ↓
 ✔ Settings
         ↓
-Backend Setup
+✔ Backend Setup
         ↓
-MongoDB
+✔ MongoDB
         ↓
-Authentication
+✔ Authentication
         ↓
 Chat Persistence
         ↓

@@ -87,7 +87,7 @@ export default function MainContent() {
   };
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="flex min-w-0 flex-1 flex-col">
       <AssistantHeader
         isListening={isListening}
         isLoading={isLoading}
