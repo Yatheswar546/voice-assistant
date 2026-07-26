@@ -1,6 +1,7 @@
 import { ai } from "@/lib/gemini";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { ChatSession } from "@/models/ChatSession";
+import { Message } from "@/models/Message";
 import { AI_CONFIG } from "@/settings/ai.config";
 
 interface ProcessChatParams {
@@ -11,6 +12,32 @@ interface ProcessChatParams {
 interface ProcessChatResponse {
   reply: string;
   sessionId: string | null;
+}
+
+async function saveUserMessage(
+  sessionId: string,
+  message: string
+) {
+  await Message.create({
+    sessionId,
+    role: "user",
+    content: message,
+  });
+
+  console.log("User message saved.");
+}
+
+async function saveAssistantMessage(
+  sessionId: string,
+  message: string
+) {
+  await Message.create({
+    sessionId,
+    role: "assistant",
+    content: message,
+  });
+
+  console.log("Assistant message saved.");
 }
 
 export async function processChat({
@@ -43,14 +70,27 @@ export async function processChat({
     console.log("New Chat Session Created:", currentSessionId);
   }
 
+  if (currentSessionId) {
+    await saveUserMessage(currentSessionId, message);
+  }
+
   // Send message to Gemini
   const response = await ai.models.generateContent({
     model: AI_CONFIG.MODEL,
     contents: message,
   });
 
+  const reply = response.text;
+
+  if (currentSessionId) {
+    await saveAssistantMessage(
+      currentSessionId,
+      reply
+    );
+  }
+
   return {
-    reply: response.text,
+    reply,
     sessionId: currentSessionId,
   };
 }
