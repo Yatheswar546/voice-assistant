@@ -45,8 +45,12 @@ export async function getAuthenticatedUser() {
   const token = cookieStore.get("auth-token")?.value;
 
   if (!token) {
-    throw new Error("Unauthorized");
+    return null;
   }
 
-  return verifyToken(token);
+  try {
+    return verifyToken(token);
+  } catch {
+    return null;
+  }
 }

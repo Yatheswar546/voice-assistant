@@ -727,9 +727,9 @@ Updated Authentication Roadmap
         ↓
 ✅Persistent Authentication /api/auth/me
         ↓
-Register UI
+✅Register UI
         ↓
-Login UI
+✅Login UI
 
 =====================================
 
@@ -765,3 +765,80 @@ lib/
 
 app/api/
     HTTP Request Handling
+
+==================================================================================
+==================================================================================
+
+Chat Persistence Roadmap (after Authentication)
+
+✅Module 4.1
+Create Chat Session
+When a logged-in user sends their first message:
+
+User
+↓
+Does active session exist?
+↓
+No
+↓
+Create ChatSession document
+↓
+Return sessionId
+
+Nothing else yet. Just create the session.
+
+Module 4.2
+Save User Message
+
+User types
+↓
+Message model
+↓
+MongoDB
+
+Only the user's message gets stored.
+
+Module 4.3
+
+Call Gemini
+Exactly as we already do.
+
+Module 4.4
+Save Assistant Message
+
+Gemini Reply
+↓
+Message Model
+↓
+MongoDB
+
+Module 4.5
+Return Messages
+Return the updated conversation to the frontend.
+
+Module 4.6
+Load Conversation
+
+When the page opens:
+
+Session ID
+↓
+MongoDB
+↓
+All Messages
+↓
+Chat Window
+
+Module 4.7
+Sidebar Integration
+Only after sessions exist.
+
+ChatSession Collection
+↓
+Today's Chats
+↓
+Yesterday
+↓
+Older
+↓
+Sidebar

@@ -19,6 +19,4 @@ const ChatSessionSchema = new Schema(
   }
 );
 
-export const ChatSession =
-  models.ChatSession ||
-  model("ChatSession", ChatSessionSchema);
+export const ChatSession = models.ChatSession || model("ChatSession", ChatSessionSchema);
