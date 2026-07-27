@@ -42,12 +42,28 @@ async function saveAssistantMessage(
 
 async function getConversationHistory(sessionId: string) {
   const messages = await Message.find({ sessionId })
-    .sort({ createdAt: 1 })
+    .sort({ createdAt: -1 }) // Newest first
+    .limit(20)               // Keep only the latest 20 messages
     .lean();
 
-  console.log("Conversation History:", messages);
+  // Reverse so Gemini receives the conversation
+  // from oldest to newest.
+  const orderedMessages = messages.reverse();
 
-  return messages;
+  console.log("Conversation History:", orderedMessages);
+
+  return orderedMessages;
+}
+
+function convertMessagesToGeminiHistory(messages: any[]) {
+  return messages.map((message) => ({
+    role: message.role === "assistant" ? "model" : "user",
+    parts: [
+      {
+        text: message.content,
+      },
+    ],
+  }));
 }
 
 export async function processChat({
@@ -90,10 +106,18 @@ export async function processChat({
     conversationHistory = await getConversationHistory(currentSessionId);
   }
 
+  const geminiConversationHistory =
+    convertMessagesToGeminiHistory(conversationHistory);
+
+  console.log(
+    "Gemini Conversation History:",
+    JSON.stringify(geminiConversationHistory, null, 2)
+  );
+
   // Send message to Gemini
   const response = await ai.models.generateContent({
     model: AI_CONFIG.MODEL,
-    contents: message,
+    contents: geminiConversationHistory,
   });
 
   const reply = response.text;
