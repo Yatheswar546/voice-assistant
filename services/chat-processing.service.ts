@@ -40,6 +40,16 @@ async function saveAssistantMessage(
   console.log("Assistant message saved.");
 }
 
+async function getConversationHistory(sessionId: string) {
+  const messages = await Message.find({ sessionId })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  console.log("Conversation History:", messages);
+
+  return messages;
+}
+
 export async function processChat({
   message,
   sessionId,
@@ -72,6 +82,12 @@ export async function processChat({
 
   if (currentSessionId) {
     await saveUserMessage(currentSessionId, message);
+  }
+
+  let conversationHistory = [];
+
+  if (currentSessionId) {
+    conversationHistory = await getConversationHistory(currentSessionId);
   }
 
   // Send message to Gemini
