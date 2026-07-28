@@ -1,13 +1,18 @@
 import SessionItem from "./SessionItem";
+import { ChatSession } from "@/types/session";
 
 interface SessionGroupProps {
   title: string;
   sessions: string[];
+  activeSessionId?: string;
+  onSessionClick: (sessionId: string) => void;
 }
 
 export default function SessionGroup({
   title,
   sessions,
+  activeSessionId,
+  onSessionClick,
 }: SessionGroupProps) {
   return (
     <div className="space-y-2">
@@ -15,11 +20,13 @@ export default function SessionGroup({
         {title}
       </h2>
 
-      {sessions.map((session, index) => (
+      {sessions.map((session) => (
         <SessionItem
-          key={session}
-          title={session}
-          active={index === 0 && title === "Today"}
+          id={session._id}
+          key={session._id}
+          title={session.title}
+          active={activeSessionId === session._id}
+          onClick={onSessionClick}
         />
       ))}
     </div>
