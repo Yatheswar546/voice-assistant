@@ -40,3 +40,55 @@ export async function getSessions(): Promise<ChatSession[]> {
     throw new Error("Unexpected error occurred.");
   }
 }
+
+export async function deleteSession(
+  sessionId: string
+): Promise<void> {
+
+  try {
+
+    const response = await fetch(
+      `/api/sessions/${sessionId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+      switch (response.status) {
+
+        case 404:
+          throw new Error("Chat not found.");
+
+        case 500:
+          throw new Error(
+            "Unable to delete chat. Please try again."
+          );
+
+        default:
+          throw new Error(
+            data.error || "Something went wrong."
+          );
+      }
+    }
+
+  } catch (error) {
+
+    if (!navigator.onLine) {
+      throw new Error(
+        "No internet connection."
+      );
+    }
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error(
+      "Unexpected error occurred."
+    );
+  }
+}

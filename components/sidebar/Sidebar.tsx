@@ -8,6 +8,7 @@ import SessionGroup from "./SessionGroup";
 import { useChat } from "@/context/ChatContext";
 import { getSessionMessages } from "@/services/message.service";
 import { useAuth } from "@/hooks/useAuth";
+import { deleteSession } from "@/services/session.service";
 
 export default function Sidebar() {
 
@@ -22,7 +23,7 @@ export default function Sidebar() {
   } = useChat();
 
   useEffect(() => {
-    if(isAuthenticated) {
+    if (isAuthenticated) {
       loadSessions();
     }
   }, [isAuthenticated]);
@@ -41,6 +42,24 @@ export default function Sidebar() {
       console.error(error);
     }
   }
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await deleteSession(sessionId);
+
+      // Refresh the sidebar
+      await loadSessions();
+
+      // If the deleted chat was currently open,
+      // clear the chat window.
+      if (activeSessionId === sessionId) {
+        setMessages([]);
+        setActiveSessionId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete session:", error);
+    }
+  };
 
   return (
     <aside className="m-4 hidden h-[calc(100vh-2rem)] w-80 shrink-0 flex-col rounded-3xl border border-white/10 bg-[#111217] p-6 lg:flex">
@@ -66,6 +85,7 @@ export default function Sidebar() {
             sessions={sessions}
             activeSessionId={activeSessionId}
             onSessionClick={handleSessionClick}
+            onDelete={handleDeleteSession}
           />
         )}
 

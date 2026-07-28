@@ -3,9 +3,10 @@ import { ChatSession } from "@/types/session";
 
 interface SessionGroupProps {
   title: string;
-  sessions: string[];
-  activeSessionId?: string;
-  onSessionClick: (sessionId: string) => void;
+  sessions: ChatSession[];
+  activeSessionId: string | null;
+  onSessionClick: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export default function SessionGroup({
@@ -13,6 +14,7 @@ export default function SessionGroup({
   sessions,
   activeSessionId,
   onSessionClick,
+  onDelete,
 }: SessionGroupProps) {
   return (
     <div className="space-y-2">
@@ -27,6 +29,7 @@ export default function SessionGroup({
           title={session.title}
           active={activeSessionId === session._id}
           onClick={onSessionClick}
+          onDelete={onDelete}
         />
       ))}
     </div>
