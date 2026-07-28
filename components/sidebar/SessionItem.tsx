@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   MoreHorizontal,
@@ -33,7 +33,10 @@ interface SessionItemProps {
   active?: boolean;
   onClick: (id: string) => void;
   onDelete: (id: string) => void;
-  onRename?: (id: string) => void;
+  onRename: (
+    id: string,
+    newTitle: string
+  ) => Promise<void>;
 }
 
 
@@ -43,25 +46,91 @@ export default function SessionItem({
   active = false,
   onClick,
   onDelete,
+  onRename,
 }: SessionItemProps) {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editedTitle, setEditedTitle] = useState(title);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    setEditedTitle(title);
+  }, [title]);
+
+  const handleRename = async () => {
+    const trimmedTitle = editedTitle.trim();
+
+    if (!trimmedTitle) {
+      setEditedTitle(title);
+      setIsEditing(false);
+      return;
+    }
+
+    if (trimmedTitle === title) {
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      await onRename(id, trimmedTitle);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to rename session:", error);
+      setEditedTitle(title);
+      setIsEditing(false);
+    }
+  };
 
   return (
     <>
       <div
         className={`group flex items-center justify-between rounded-xl transition-all ${active
-            ? "bg-blue-500 text-white"
-            : "text-gray-300 hover:bg-white/5"
+          ? "bg-blue-500 text-white"
+          : "text-gray-300 hover:bg-white/5"
           }`}
       >
         {/* Session Button */}
-        <button
-          onClick={() => onClick(id)}
-          className="flex-1 truncate px-4 py-3 text-left"
-        >
-          {title}
-        </button>
+        <div className="flex-1 px-4 py-3">
+
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRename();
+                }
+
+                if (e.key === "Escape") {
+                  setEditedTitle(title);
+                  setIsEditing(false);
+                }
+              }}
+              className="w-full rounded bg-transparent outline-none"
+            />
+          ) : (
+            <button
+              onClick={() => onClick(id)}
+              className="w-full truncate text-left"
+            >
+              {title}
+            </button>
+          )}
+
+        </div>
 
         {/* Dropdown Menu */}
         <DropdownMenu>
@@ -73,7 +142,9 @@ export default function SessionItem({
 
           <DropdownMenuContent align="end">
 
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem
+              onClick={() => setIsEditing(true)}
+            >
               <Pencil className="mr-2 h-4 w-4" />
               Rename
             </DropdownMenuItem>

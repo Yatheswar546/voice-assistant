@@ -7,6 +7,10 @@ interface SessionGroupProps {
   activeSessionId: string | null;
   onSessionClick: (id: string) => void;
   onDelete: (id: string) => void;
+  onRename: (
+    id: string,
+    newTitle: string,
+  ) => Promise<void>;
 }
 
 export default function SessionGroup({
@@ -15,6 +19,7 @@ export default function SessionGroup({
   activeSessionId,
   onSessionClick,
   onDelete,
+  onRename,
 }: SessionGroupProps) {
   return (
     <div className="space-y-2">
@@ -30,6 +35,7 @@ export default function SessionGroup({
           active={activeSessionId === session._id}
           onClick={onSessionClick}
           onDelete={onDelete}
+          onRename={onRename}
         />
       ))}
     </div>

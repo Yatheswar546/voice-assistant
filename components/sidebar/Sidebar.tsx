@@ -8,7 +8,7 @@ import SessionGroup from "./SessionGroup";
 import { useChat } from "@/context/ChatContext";
 import { getSessionMessages } from "@/services/message.service";
 import { useAuth } from "@/hooks/useAuth";
-import { deleteSession } from "@/services/session.service";
+import { deleteSession, renameSession } from "@/services/session.service";
 
 export default function Sidebar() {
 
@@ -61,6 +61,20 @@ export default function Sidebar() {
     }
   };
 
+  const handleRenameSession = async (
+    sessionId: string,
+    newTitle: string
+  ) => {
+    try {
+      await renameSession(sessionId, newTitle);
+
+      await loadSessions();
+
+    } catch (error) {
+      console.error("Failed to rename session:", error);
+    }
+  };
+
   return (
     <aside className="m-4 hidden h-[calc(100vh-2rem)] w-80 shrink-0 flex-col rounded-3xl border border-white/10 bg-[#111217] p-6 lg:flex">
 
@@ -86,6 +100,7 @@ export default function Sidebar() {
             activeSessionId={activeSessionId}
             onSessionClick={handleSessionClick}
             onDelete={handleDeleteSession}
+            onRename={handleRenameSession}
           />
         )}
 
