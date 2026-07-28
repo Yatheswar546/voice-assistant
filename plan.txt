@@ -1070,58 +1070,6 @@ This context can hold:
       -> setCurrentSession
       -> isLoadingConversation
 
-======================
-
-Development Plan
-
-I would implement this in exactly this order.
-
-Step 1:
-Create "types/session.ts"
-
-Define all session interfaces.
-
-Step 2:
-Create "ChatContext.tsx"
-
-Only session-related shared state.
-
-Step 3:
-Create "session.service.ts"
-
-Exactly the same style as your existing chat.service.ts, keeping consistency in how the frontend talks to the backend.
-
-Step 4:
-Create "GET /api/sessions"
-
-Step 5:
-Replace "const todaySessions = [...]"
-with "sessions from Context"
-
-Step 6:
-Implement "groupSessions()"
-
-Step 7:
-Click Session
-↓
-Load Messages
-↓
-Replace messages
-
-Step 8:
-Implement "New Session"
-
-Step 9:
-Protect sidebar
-
-Guest
-↓
-Show
-
-"Login to view chat history"
-
-Logged-in users get the real session list.
-
 =================================
 
 Updated RoadMap for Sidebar
@@ -1141,11 +1089,11 @@ Phase 3: Sidebar Integration
         ✅ Load sessions from API
         ✅ Replace hardcoded sessions
         Group sessions (Today, Yesterday, Earlier)
-        Display "Login to view chat history" for guests
+        ✅ Display "Login to view chat history" for guests
 
-Phase 4: Session Switching
-        Load messages when clicking a session
-        Update ChatWindow
+✅ Phase 4: Session Switching
+        ✅ Load messages when clicking a session
+        ✅ Update ChatWindow
 
 Phase 5: New Session
         Reset current conversation

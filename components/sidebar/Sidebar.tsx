@@ -1,50 +1,62 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import Logo from "@/components/common/Logo";
 import NewSessionButton from "./NewSessionButton";
 import SessionGroup from "./SessionGroup";
 import { getSessions } from "@/services/session.service";
-import { SessionGroup as SessionGroupType } from "@/types/session";
+import { useChat } from "@/context/ChatContext";
+import { getSessionMessages } from "@/services/message.service";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Sidebar() {
 
-  const [groups, setGroups] = useState<SessionGroupType[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string>();
+  const { isAuthenticated } = useAuth();
+
+  const {
+    sessions,
+    setSessions,
+    messages,
+    setMessages,
+    activeSessionId,
+    setActiveSessionId,
+  } = useChat();
 
   useEffect(() => {
-    loadSessions();
-  }, []);
+    if(isAuthenticated) {
+      loadSessions();
+    }
+  }, [isAuthenticated]);
 
   async function loadSessions() {
     try {
       const sessions = await getSessions();
 
-      const grouped: SessionGroupType[] = [
-        {
-          title: "All Chats",
-          sessions,
-        },
-      ];
-
-      setGroups(grouped);
+      setSessions(sessions);
     } catch (error) {
       console.error(error);
     }
   }
 
-  function handleSessionClick(sessionId: string) {
-    setActiveSessionId(sessionId);
+  async function handleSessionClick(sessionId: string) {
+    try {
+      setActiveSessionId(sessionId);
 
-    console.log("Selected Session:", sessionId);
+      const messages = await getSessionMessages(sessionId);
 
-    // Next step:
-    // Fetch messages for this session
+      setMessages(messages);
+
+      console.log("Loaded Session:", sessionId);
+
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
     <aside className="m-4 hidden h-[calc(100vh-2rem)] w-80 shrink-0 flex-col rounded-3xl border border-white/10 bg-[#111217] p-6 lg:flex">
+
       {/* Logo */}
       <Logo />
 
@@ -55,15 +67,20 @@ export default function Sidebar() {
 
       {/* Session List */}
       <div className="mt-10 flex-1 space-y-8 overflow-y-auto">
-        {groups.map((group) => (
+
+        {!isAuthenticated ? (
+          <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-400">
+            Login to view chat history
+          </div>
+        ) : (
           <SessionGroup
-            key={group.title}
-            title={group.title}
-            sessions={group.sessions}
+            title="All Chats"
+            sessions={sessions}
             activeSessionId={activeSessionId}
             onSessionClick={handleSessionClick}
           />
-        ))}
+        )}
+
       </div>
 
     </aside>

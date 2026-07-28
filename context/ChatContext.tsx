@@ -30,6 +30,8 @@ interface ChatContextType {
   setIsLoading: React.Dispatch<
     React.SetStateAction<boolean>
   >;
+
+  clearChat: () => void;
 }
 
 const ChatContext = createContext<
@@ -51,6 +53,12 @@ export function ChatProvider({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const clearChat = () => {
+    setSessions([]);
+    setMessages([]);
+    setActiveSessionId(null);
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -62,6 +70,7 @@ export function ChatProvider({
         setActiveSessionId,
         isLoading,
         setIsLoading,
+        clearChat,
       }}
     >
       {children}

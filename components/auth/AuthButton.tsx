@@ -11,6 +11,8 @@ import RegisterDialog from "./RegisterDialog";
 
 import { Button } from "@/components/ui/button";
 
+import { useChat } from "@/context/ChatContext";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +28,8 @@ export default function AuthButton() {
     logoutUser,
   } = useAuth();
 
+  const { clearChat } = useChat();
+
   const [loginOpen, setLoginOpen] =
     useState(false);
 
@@ -38,6 +42,8 @@ export default function AuthButton() {
   const handleLogout = async () => {
     try {
       await logoutUser();
+
+      clearChat();
 
       toast.success("Logged out successfully.");
     } catch {
