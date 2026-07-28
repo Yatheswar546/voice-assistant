@@ -879,4 +879,279 @@ Version 3.0 – Intelligent Agent Memory
         ├── Remembering unfinished work
         ├── Cross-session reasoning
 
-=============================================================
+==================================================================================
+==================================================================================
+
+Complete Roadmap for Sidebar Module:
+
+Module 11.1 - Sidebar Backend APIs
+
+This is the foundation. We'll build APIs like:
+
+GET    /api/sessions
+Returns all sessions of the logged-in user.
+
+[
+  {
+    "_id": "...",
+    "title": "...",
+    "updatedAt": "..."
+  }
+]
+
+GET    /api/sessions/:id/messages
+Loads messages for a selected session.
+
+[
+    {
+        "role":"user",
+        "message":"..."
+    },
+    {
+        "role":"assistant",
+        "message":"..."
+    }
+]
+
+PATCH /api/sessions/:id
+Rename chat.
+
+DELETE /api/sessions/:id
+Delete chat.
+
+Without these APIs the frontend cannot become dynamic.
+
+--------------
+
+Module 11.2 - Sidebar Service Layer
+
+Just like chat-processing.service.ts. We'll probably create something like
+"services/session.service.ts"
+
+Responsibilities:
+    |-> Load Sessions
+    |-> Load Messages
+    |-> Rename Session
+    |-> Delete Session
+    |-> Group Sessions
+
+Notice we're keeping the API routes thin again.
+
+--------------
+
+Module 11.3 - Protect Sidebar Features
+
+These were already planned, and I completely agree with the list.
+
+Protected features:
+     |-> ✅ Protect "New Session"
+     |-> ✅ Protect /api/chat
+     |-> ✅ Load only the logged-in user's sessions
+     |-> ✅ Display only the user's history
+     |-> ✅ Only authenticated users can create new conversations
+
+We'll implement these here.
+
+--------------
+
+Module 11.4 - Load Sessions Dynamically
+
+Currently
+const todaySessions = [...]
+
+becomes:
+
+Fetch Sessions
+↓
+State
+↓
+Sidebar
+
+So Sidebar.tsx will stop owning the data.
+
+--------------
+
+Module 11.5 - Session Grouping
+
+This is a surprisingly interesting feature. MongoDB will return something like
+
+Session A
+Created yesterday
+
+Session B
+Created today
+
+Session C
+Created last week
+
+Session D
+Created 2 months ago
+
+We need to group them into
+
+Today
+
+Yesterday
+
+Previous 7 Days
+
+Previous 30 Days
+
+Older
+
+This grouping should not happen inside the UI. It belongs in a utility/helper.
+Something like
+
+"utils/groupSessions.ts"
+or
+"services/sessionGrouping.ts"
+
+That keeps React components very clean.
+
+--------------
+
+Module 11.6 - Selecting Conversations
+
+When clicking "Planning my weekend" we should
+
+Get Session ID
+↓
+GET Messages
+↓
+Load Chat Window
+↓
+Update Active Session
+
+Exactly like ChatGPT.
+
+--------------
+
+Module 11.7 - New Session
+
+This is more than just clearing the screen. It should
+
+Clear Messages
+↓
+Reset Active Session
+↓
+Wait for First Prompt
+↓
+Create Session after first message
+
+Notice something. We should not create an empty session immediately.
+
+We already designed the backend to create a session only after the first message arrives. That avoids storing lots of empty conversations.
+
+---------------
+
+Module 11.8 - Future Sidebar Features
+
+These can come after the core functionality.
+      |-> Rename Chat
+      |-> Delete Chat
+      |-> Search Sessions
+      |-> Pin Chats
+      |-> Infinite Scroll
+      |-> Mobile Sidebar
+      |-> Drag Resize
+      |-> Collapse Sidebar
+
+---------------
+
+context/
+    ChatContext.tsx
+
+This context can hold:
+      -> sessions
+      -> currentSessionId
+      -> messages
+      -> setMessages
+      -> setSessions
+      -> setCurrentSession
+      -> isLoadingConversation
+
+======================
+
+Development Plan
+
+I would implement this in exactly this order.
+
+Step 1:
+Create "types/session.ts"
+
+Define all session interfaces.
+
+Step 2:
+Create "ChatContext.tsx"
+
+Only session-related shared state.
+
+Step 3:
+Create "session.service.ts"
+
+Exactly the same style as your existing chat.service.ts, keeping consistency in how the frontend talks to the backend.
+
+Step 4:
+Create "GET /api/sessions"
+
+Step 5:
+Replace "const todaySessions = [...]"
+with "sessions from Context"
+
+Step 6:
+Implement "groupSessions()"
+
+Step 7:
+Click Session
+↓
+Load Messages
+↓
+Replace messages
+
+Step 8:
+Implement "New Session"
+
+Step 9:
+Protect sidebar
+
+Guest
+↓
+Show
+
+"Login to view chat history"
+
+Logged-in users get the real session list.
+
+=================================
+
+Updated RoadMap for Sidebar
+
+✅ Phase 1: Backend Foundation
+        Create session types
+        Create Session Service (Backend)
+        Create Sessions API
+        Test API using Postman
+
+Phase 2: Frontend Foundation
+        Create ChatContext
+        Wrap the application with ChatContext
+        Verify Context works
+
+Phase 3: Sidebar Integration
+        Load sessions from API
+        Replace hardcoded sessions
+        Group sessions (Today, Yesterday, Earlier)
+        Display "Login to view chat history" for guests
+
+Phase 4: Session Switching
+        Load messages when clicking a session
+        Update ChatWindow
+
+Phase 5: New Session
+        Reset current conversation
+        Create new session only after first message
+
+Phase 6
+        Rename
+        Delete
+        Search (later)

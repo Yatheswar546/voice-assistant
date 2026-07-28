@@ -1,0 +1,549 @@
+# AI Voice Assistant Project - Progress Summary (Up to Conversation Memory)
+
+## Project Overview
+
+We are building a **production-style AI Voice Assistant** using modern Full Stack and GenAI technologies.
+
+This project is not just about creating a chatbot. The goal is to build an AI assistant similar to ChatGPT with features such as:
+
+* User Authentication
+* Persistent Chat History
+* Conversation Memory
+* Voice Input
+* Voice Output
+* Sidebar Chat Management
+* AI Settings
+* Long-term Memory
+* RAG (Future)
+* Scalable Architecture
+
+Throughout the project, we have been following modern software engineering principles such as modular architecture, separation of concerns, reusable components, clean code, scalability, and maintainability.
+
+---
+
+# Technology Stack
+
+## Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* App Router
+
+---
+
+## Backend
+
+* Next.js API Routes
+* TypeScript
+
+---
+
+## Database
+
+* MongoDB Atlas
+* Mongoose
+
+---
+
+## AI
+
+* Google Gemini
+* @google/genai SDK
+
+---
+
+## Authentication
+
+* JWT Authentication
+
+---
+
+# Overall Project Architecture
+
+Frontend
+     │
+     ▼
+Chat Service
+     │
+     ▼
+API Route
+     │
+     ▼
+Chat Processing Service
+     │
+     ├── Authentication
+     ├── Session Creation
+     ├── Message Persistence
+     ├── Conversation Memory
+     ├── Gemini
+     └── Response
+
+One of our important architectural decisions was to keep the API route extremely thin.
+
+Business logic is handled inside dedicated service files.
+
+---
+
+# Phase 1 - Project Setup
+
+We started by creating the project using:
+
+* Next.js
+* TypeScript
+* Tailwind CSS
+
+We organised the project into reusable folders such as:
+
+app/
+components/
+constants/
+context/
+hooks/
+lib/
+models/
+schemas/
+services/
+settings/
+types/
+utils/
+
+We agreed that this folder structure would remain the base architecture for the project.
+
+---
+
+# Phase 2 - MongoDB Integration
+
+We integrated MongoDB Atlas into the project.
+
+Implemented:
+
+* MongoDB Atlas Cluster
+* Environment Variables
+* Database Connection
+* Mongoose
+
+Created - lib/mongodb.ts
+
+Implemented:
+
+* Singleton Database Connection
+* Cached Connection
+* Reusable Database Connector
+
+We also spent significant time debugging MongoDB connection issues related to DNS SRV records, Atlas connectivity, Node.js versions, and environment configuration until the connection became stable.
+
+---
+
+# Phase 3 - Database Models
+
+Created Mongoose Models.
+
+## User
+
+Stores
+* Name
+* Email
+* Password
+* etc.
+
+---
+
+## ChatSession
+
+Stores
+* User ID
+* Chat Title
+* Created Time
+* Updated Time
+
+One ChatSession represents one conversation.
+
+---
+
+## Message
+
+Stores
+* Session ID
+* Role
+* Content
+* Timestamp
+
+Every user message and every assistant reply becomes one document.
+
+Relationship:
+
+ChatSession
+
+     │
+
+     ├── Message
+     ├── Message
+     ├── Message
+     ├── Message
+
+---
+
+# Phase 4 - Authentication
+
+Implemented JWT Authentication.
+
+Created helper - lib/auth.ts
+
+Authentication flow:
+
+Read Token
+↓
+Verify JWT
+↓
+Return User
+↓
+Continue Request
+
+Guest users:
+
+return null;
+
+Authenticated users:
+
+Return decoded JWT payload.
+
+This allows the same API to support both guest and logged-in users.
+
+---
+
+# Phase 5 - Gemini Integration
+
+Integrated @google/genai
+
+Created - lib/gemini.ts
+
+Configured - GoogleGenAI
+
+using - GEMINI_API_KEY
+
+This file became the single entry point for Gemini communication.
+
+---
+
+# Phase 6 - Chat API
+
+Created - app/api/chat/route.ts
+
+One of the biggest architectural decisions.
+
+Instead of putting business logic here, we kept the route extremely small.
+
+Flow:
+
+Receive Request
+↓
+Connect Database
+↓
+Call processChat()
+↓
+Return Response
+
+This follows Separation of Concerns.
+
+---
+
+# Phase 7 - Chat Processing Service
+
+Created - services/chat-processing.service.ts
+
+This became the heart of the backend.
+
+Responsibilities:
+* Authenticate User
+* Create Session
+* Save User Message
+* Retrieve Conversation
+* Call Gemini
+* Save Assistant Message
+* Return Response
+
+Instead of writing everything inside route.ts, we created reusable helper functions.
+
+---
+
+# Session Creation
+
+If sessionId is null
+↓
+Create new ChatSession
+↓
+Generate title from first message
+↓
+Return sessionId
+
+This enables persistent conversations.
+
+---
+
+# Chat Persistence
+Implemented complete database persistence.
+
+User Message
+↓
+Save to MongoDB
+↓
+Gemini
+↓
+Assistant Message
+↓
+Save to MongoDB
+
+Every conversation now exists permanently inside MongoDB.
+
+---
+
+# Helper Functions Created
+
+We modularised the service by creating dedicated helpers:
+
+## saveUserMessage()
+Stores every user prompt.
+
+## saveAssistantMessage()
+Stores every Gemini response.
+
+## getConversationHistory()
+Loads messages belonging to one session.
+
+Initially: Load Entire Conversation
+
+Later upgraded to: Load Last 20 Messages
+
+---
+
+## convertMessagesToGeminiHistory()
+One of the most important helper functions.
+
+Purpose:
+Convert MongoDB messages
+↓
+Gemini Content[]
+
+Mapping:
+```text
+Database
+
+user
+↓
+Gemini
+
+user
+```
+
+```text
+Database
+
+assistant
+↓
+Gemini
+
+model
+```
+
+Generated structure:
+```text
+[
+    {
+        role,
+        parts
+    }
+]
+```
+This is exactly what Gemini expects.
+
+---
+
+# Conversation Memory
+
+Initially Gemini received:
+
+contents: message
+
+Meaning: Every request was independent.
+
+Example:
+
+User:
+"What is React?"
+
+User:
+"Who created it?"
+
+Gemini answered
+"I was created by Google."
+
+because it had no previous context.
+
+---
+
+We changed the implementation to:
+
+```text
+Load Conversation
+↓
+Convert Conversation
+↓
+Send Entire Conversation
+```
+
+Now Gemini receives:
+
+```text
+contents: geminiConversationHistory
+```
+
+instead of only the latest message.
+
+---
+
+Result:
+
+User:
+What is React?
+
+Assistant:
+...
+
+User:
+Who created it?
+
+Gemini correctly answers:
+React was created by Jordan Walke at Facebook (Meta).
+
+Conversation memory is now fully functional.
+
+---
+
+# Context Window Management (Version 1.0)
+After implementing memory, we optimised context handling.
+
+Originally:
+```text
+Load ALL messages
+```
+
+Problem:
+* Higher API cost
+* Slower responses
+* Context window limitations
+
+Solution:
+Retrieve only the latest 20 messages.
+
+Implementation:
+```text
+Find Messages
+↓
+Sort Descending
+↓
+Limit 20
+↓
+Reverse
+↓
+Gemini
+```
+
+Why reverse?
+MongoDB returns newest first.
+Gemini should read conversations from oldest to newest.
+So we reverse before sending.
+
+This provides:
+* Better performance
+* Lower token usage
+* Easier scalability
+
+---
+
+# Final Backend Flow
+
+```text
+User
+↓
+API Route
+↓
+Connect MongoDB
+↓
+Authenticate User
+↓
+Create Session (if required)
+↓
+Save User Message
+↓
+Retrieve Last 20 Messages
+↓
+Convert MongoDB Messages
+↓
+Gemini
+↓
+Save Assistant Response
+↓
+Return Response
+```
+
+---
+
+# Architectural Decisions Made
+We intentionally chose NOT to use Gemini's built-in chat session API.
+
+Instead:
+MongoDB is our source of truth.
+
+Reasons:
+* Persistent chat history
+* Sidebar support
+* Resume conversations
+* Full control over data
+* Easier future RAG integration
+* Scalable architecture
+
+This is the same approach used in many production AI systems.
+
+---
+
+# Current Project Status
+
+## Completed
+
+* ✅ Project Setup
+* ✅ Folder Architecture
+* ✅ MongoDB Integration
+* ✅ Mongoose Models
+* ✅ JWT Authentication
+* ✅ Gemini Integration
+* ✅ Chat API
+* ✅ Chat Processing Service
+* ✅ Chat Session Creation
+* ✅ Message Persistence
+* ✅ Conversation History Retrieval
+* ✅ Conversation Memory
+* ✅ Last 20 Messages Context Window
+
+---
+
+# Next Module
+
+The next module is:
+
+## Sidebar Functionality
+
+We will build a complete sidebar that supports:
+
+* New Chat
+* Display all previous chat sessions
+* Open existing chats
+* Load all messages of a selected chat
+* Continue conversations seamlessly
+* Display chat titles
+* Organise sessions (Today, Yesterday, Previous)
+
+This module will build directly on top of the chat persistence system we've already implemented, without requiring any changes to the backend architecture.
+
+---
