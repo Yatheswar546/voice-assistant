@@ -40,7 +40,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error(error);
+    // console.error(error);
 
     return NextResponse.json(
       {
@@ -103,7 +103,7 @@ export async function PATCH(
     return NextResponse.json(updatedSession);
 
   } catch (error) {
-    console.error(error);
+    // console.error(error);
 
     return NextResponse.json(
       {

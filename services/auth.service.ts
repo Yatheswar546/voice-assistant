@@ -64,11 +64,11 @@ export async function loginUser(data: LoginInput) {
     email: user.email,
   });
 
-  console.log("========== LOGIN DEBUG ==========");
-  console.log("User:", user.email);
-  console.log("User ID:", user._id.toString());
-  console.log("Generated Token:", token);
-  console.log("================================");
+  // console.log("========== LOGIN DEBUG ==========");
+  // console.log("User:", user.email);
+  // console.log("User ID:", user._id.toString());
+  // console.log("Generated Token:", token);
+  // console.log("================================");
 
   return {
     token,

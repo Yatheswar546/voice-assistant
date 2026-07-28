@@ -30,7 +30,7 @@ export async function connectDB() {
     return cached.conn;
   }
 
-  console.log("MONGODB_URI: ", MONGODB_URI);
+  // console.log("MONGODB_URI: ", MONGODB_URI);
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI!);
@@ -42,10 +42,10 @@ export async function connectDB() {
 
   try {
     cached.conn = await cached.promise;
-    console.log("✅ MongoDB Connected");
+    // console.log("✅ MongoDB Connected");
     return cached.conn;
   } catch (error) {
-    console.error("❌ MongoDB Connection Failed:", error);
+    // console.error("❌ MongoDB Connection Failed:", error);
     cached.promise = null;
     throw error;
   }

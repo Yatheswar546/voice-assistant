@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // Connect to MongoDB
     await connectDB();
 
-    console.log(request.method);
+    // console.log(request.method);
 
     // Parse request body
     const body = await request.json();
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.error("Registration Error:", error);
+    // console.error("Registration Error:", error);
 
     return NextResponse.json(
       {

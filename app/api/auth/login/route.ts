@@ -7,7 +7,7 @@ import { loginUser } from "@/services/auth.service";
 
 export async function POST(request: NextRequest) {
 
-  console.log("🔥 LOGIN ROUTE HIT");
+  // console.log("🔥 LOGIN ROUTE HIT");
 
   try {
     await connectDB();
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         path: "/",
     });
 
-    console.log("🔥 Returning response with cookie");
+    // console.log("🔥 Returning response with cookie");
     
     return response;
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Login Error:", error);
+    // console.error("Login Error:", error);
 
     return NextResponse.json(
       {

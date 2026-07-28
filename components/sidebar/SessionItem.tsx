@@ -86,7 +86,7 @@ export default function SessionItem({
       await onRename(id, trimmedTitle);
       setIsEditing(false);
     } catch (error) {
-      console.error("Failed to rename session:", error);
+      // console.error("Failed to rename session:", error);
       setEditedTitle(title);
       setIsEditing(false);
     }

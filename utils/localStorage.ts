@@ -28,6 +28,6 @@ export function saveToLocalStorage<T>(
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error("Failed to save to Local Storage:", error);
+    // console.error("Failed to save to Local Storage:", error);
   }
 }

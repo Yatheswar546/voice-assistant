@@ -33,7 +33,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("GET /api/auth/me Error:", error);
+    // console.error("GET /api/auth/me Error:", error);
 
     return NextResponse.json(
       {

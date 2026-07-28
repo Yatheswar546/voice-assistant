@@ -48,10 +48,10 @@ export default function Sidebar({
 
       setMessages(messages);
 
-      console.log("Loaded Session:", sessionId);
+      // console.log("Loaded Session:", sessionId);
 
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     }
   }
 
@@ -69,7 +69,7 @@ export default function Sidebar({
         setActiveSessionId(null);
       }
     } catch (error) {
-      console.error("Failed to delete session:", error);
+      // console.error("Failed to delete session:", error);
     }
   };
 
@@ -83,7 +83,7 @@ export default function Sidebar({
       await loadSessions();
 
     } catch (error) {
-      console.error("Failed to rename session:", error);
+      // console.error("Failed to rename session:", error);
     }
   };
 

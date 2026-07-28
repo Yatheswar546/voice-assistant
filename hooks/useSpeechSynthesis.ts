@@ -34,7 +34,7 @@ export function useSpeechSynthesis() {
 
   const speak = (text: string) => {
     if (!("speechSynthesis" in window)) {
-      console.error("Speech Synthesis is not supported in this browser.");
+      // console.error("Speech Synthesis is not supported in this browser.");
       return;
     }
 

@@ -24,7 +24,7 @@ export async function POST() {
 
     return response;
   } catch (error) {
-    console.error("Logout Error:", error);
+    // console.error("Logout Error:", error);
 
     return NextResponse.json(
       {

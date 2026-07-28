@@ -7,7 +7,7 @@ export async function POST() {
         // Connect to MongoDB
         await connectDB();
 
-        console.log("Before creation ");
+        // console.log("Before creation ");
         
         // Create a test user
         const user = await User.create({
@@ -16,7 +16,7 @@ export async function POST() {
             password: "password12345",
         });
 
-        console.log("User: ", user);
+        // console.log("User: ", user);
 
         // Return success response
         return NextResponse.json(
@@ -29,7 +29,7 @@ export async function POST() {
         );
     } catch (error) {
         
-        console.error("Error creating user:", error);
+        // console.error("Error creating user:", error);
 
         return NextResponse.json(
             {

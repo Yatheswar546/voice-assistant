@@ -27,7 +27,7 @@ export async function GET() {
 
   } catch (error: any) {
 
-    console.error("Sessions API Error:", error);
+    // console.error("Sessions API Error:", error);
 
     return NextResponse.json(
       {

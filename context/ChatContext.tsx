@@ -80,7 +80,7 @@ export function ChatProvider({
       const sessions = await getSessions();
       setSessions(sessions);
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     }
   };
 

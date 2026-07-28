@@ -24,7 +24,7 @@ async function saveUserMessage(
     content: message,
   });
 
-  console.log("User message saved.");
+  // console.log("User message saved.");
 }
 
 async function saveAssistantMessage(
@@ -37,7 +37,7 @@ async function saveAssistantMessage(
     content: message,
   });
 
-  console.log("Assistant message saved.");
+  // console.log("Assistant message saved.");
 }
 
 async function getConversationHistory(sessionId: string) {
@@ -50,7 +50,7 @@ async function getConversationHistory(sessionId: string) {
   // from oldest to newest.
   const orderedMessages = messages.reverse();
 
-  console.log("Conversation History:", orderedMessages);
+  // console.log("Conversation History:", orderedMessages);
 
   return orderedMessages;
 }
@@ -74,7 +74,7 @@ export async function processChat({
   // Get logged-in user (null for guests)
   const user = await getAuthenticatedUser();
 
-  console.log("Authenticated User:", user);
+  // console.log("Authenticated User:", user);
 
   let currentSessionId = sessionId ?? null;
 
@@ -93,7 +93,7 @@ export async function processChat({
 
     currentSessionId = session._id.toString();
 
-    console.log("New Chat Session Created:", currentSessionId);
+    // console.log("New Chat Session Created:", currentSessionId);
   }
 
   if (currentSessionId) {
@@ -109,10 +109,10 @@ export async function processChat({
   const geminiConversationHistory =
     convertMessagesToGeminiHistory(conversationHistory);
 
-  console.log(
-    "Gemini Conversation History:",
-    JSON.stringify(geminiConversationHistory, null, 2)
-  );
+  // console.log(
+  //   "Gemini Conversation History:",
+  //   JSON.stringify(geminiConversationHistory, null, 2)
+  // );
 
   // Send message to Gemini
   const response = await ai.models.generateContent({

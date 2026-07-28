@@ -88,7 +88,7 @@ export default function MainContent({
 
     } catch (error) {
 
-      console.error(error);
+      // console.error(error);
 
       const assistantMessage: ChatMessage = {
         role: "assistant",

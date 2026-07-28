@@ -16,7 +16,7 @@ export function useSpeechRecognition({
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      console.warn("Speech Recognition is not supported in this browser.");
+      // console.warn("Speech Recognition is not supported in this browser.");
       return;
     }
 
@@ -39,7 +39,7 @@ export function useSpeechRecognition({
 
     // Event: Error
     recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
+      // console.error("Speech Recognition Error:", event.error);
       setIsListening(false);
     };
 
@@ -76,7 +76,7 @@ export function useSpeechRecognition({
     try {
       recognitionRef.current.start();
     } catch (error) {
-      console.error("Failed to start speech recognition:", error);
+      // console.error("Failed to start speech recognition:", error);
     }
   }, [isListening]);
 
