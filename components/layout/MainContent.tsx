@@ -9,14 +9,22 @@ import { sendMessage } from "@/services/chat.service";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import SettingsPanel from "../voice/SettingsPanel";
+import { useChat } from "@/context/ChatContext";
 
 export default function MainContent() {
 
   const [input, setInput] = useState("");
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const {
+    messages,
+    setMessages,
+    isLoading,
+    setIsLoading,
+  } = useChat();
 
-  const [isLoading, setIsLoading] = useState(false);
+  // const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // const [isLoading, setIsLoading] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 

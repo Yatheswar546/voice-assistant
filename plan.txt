@@ -1127,19 +1127,19 @@ Logged-in users get the real session list.
 Updated RoadMap for Sidebar
 
 ✅ Phase 1: Backend Foundation
-        Create session types
-        Create Session Service (Backend)
-        Create Sessions API
-        Test API using Postman
+        ✅ Create session types
+        ✅ Create Session Service (Backend)
+        ✅ Create Sessions API
+        ✅ Test API using Postman
 
-Phase 2: Frontend Foundation
-        Create ChatContext
-        Wrap the application with ChatContext
-        Verify Context works
+✅ Phase 2: Frontend Foundation
+        ✅ Create ChatContext
+        ✅ Wrap the application with ChatContext
+        ✅ Verify Context works
 
 Phase 3: Sidebar Integration
-        Load sessions from API
-        Replace hardcoded sessions
+        ✅ Load sessions from API
+        ✅ Replace hardcoded sessions
         Group sessions (Today, Yesterday, Earlier)
         Display "Login to view chat history" for guests
 
