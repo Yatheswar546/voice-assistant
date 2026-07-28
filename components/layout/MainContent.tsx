@@ -106,7 +106,7 @@ export default function MainContent({
   };
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col">
+    <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
       <AssistantHeader
         isListening={isListening}
         isLoading={isLoading}

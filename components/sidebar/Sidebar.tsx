@@ -90,21 +90,21 @@ export default function Sidebar({
   return (
     <>
 
-      <aside className="m-4 hidden h-[calc(100vh-2rem)] w-80 shrink-0 flex-col rounded-3xl border border-white/10 bg-[#111217] p-6 lg:flex">
+      <aside className="m-4 hidden h-[calc(100vh-2rem)] w-96 shrink-0 rounded-3xl border border-white/10 bg-[#111217] pt-6 lg:flex flex-col">
 
         {/* Logo */}
         <Logo />
 
         {/* Button */}
-        <div className="mt-8">
+        <div className="mt-8 px-6">
           <NewSessionButton />
         </div>
 
         {/* Session List */}
-        <div className="mt-10 flex-1 overflow-x-hidden overflow-y-auto space-y-8">
+        <div className="mt-8 flex-1 overflow-y-auto px-6 pb-6">
 
           {!isAuthenticated ? (
-            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-400">
+            <div className="flex h-full items-center justify-center px-2 text-center text-sm text-slate-400">
               Login to view chat history
             </div>
           ) : (
@@ -161,14 +161,14 @@ export default function Sidebar({
         <Logo />
 
         {/* Button */}
-        <div className="mt-8">
+        <div className="mt-8 px-2">
           <NewSessionButton />
         </div>
 
         {/* Session List */}
-        <div className="mt-10 flex flex-1 flex-col">
+        <div className="mt-8 flex flex-1 flex-col">
 
-          <div className="flex-1 overflow-y-auto space-y-8">
+          <div className="flex-1 overflow-y-auto pb-4">
 
             {!isAuthenticated ? (
               <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-400">

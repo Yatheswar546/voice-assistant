@@ -12,7 +12,7 @@ export default function AppLayout() {
 
   return (
     <ChatProvider>
-      <div className="flex min-h-screen bg-[#0B0B0F] text-white">
+      <div className="flex h-screen overflow-hidden bg-[#0B0B0F] text-white">
         
         <Sidebar 
           isOpen={isSidebarOpen}

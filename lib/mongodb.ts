@@ -12,9 +12,9 @@ declare global {
   // eslint-disable-next-line no-var
   var mongooseConnection:
     | {
-        conn: typeof mongoose | null;
-        promise: Promise<typeof mongoose> | null;
-      }
+      conn: typeof mongoose | null;
+      promise: Promise<typeof mongoose> | null;
+    }
     | undefined;
 }
 
@@ -36,7 +36,17 @@ export async function connectDB() {
     cached.promise = mongoose.connect(MONGODB_URI!);
   }
 
-  cached.conn = await cached.promise;
+  // cached.conn = await cached.promise;
 
-  return cached.conn;
+  // return cached.conn;
+
+  try {
+    cached.conn = await cached.promise;
+    console.log("✅ MongoDB Connected");
+    return cached.conn;
+  } catch (error) {
+    console.error("❌ MongoDB Connection Failed:", error);
+    cached.promise = null;
+    throw error;
+  }
 }
