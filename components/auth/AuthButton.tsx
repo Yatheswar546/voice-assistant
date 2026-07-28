@@ -92,20 +92,17 @@ export default function AuthButton() {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="h-11 gap-2 rounded-full border-white/15 bg-transparent px-5 text-base text-white hover:border-blue-400 hover:bg-white/5"
-          >
-            <User className="h-4 w-4" />
+        <DropdownMenuTrigger
+          className="h-11 gap-2 rounded-full border-white/15 bg-transparent px-5 text-base text-white hover:border-blue-400 hover:bg-white/5"
+        >
+          <User className="h-4 w-4" />
 
-            <span className="max-w-36 truncate">
-              {user?.name}
-            </span>
-          </Button>
+          <span className="max-w-36 truncate">
+            {user?.name}
+          </span>
         </DropdownMenuTrigger>
 
-                <DropdownMenuContent
+        <DropdownMenuContent
           align="end"
           className="w-64 border border-white/15 bg-[#111217] p-2 text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)]"
         >

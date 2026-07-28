@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import Logo from "@/components/common/Logo";
 import NewSessionButton from "./NewSessionButton";
 import SessionGroup from "./SessionGroup";
-import { getSessions } from "@/services/session.service";
 import { useChat } from "@/context/ChatContext";
 import { getSessionMessages } from "@/services/message.service";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,11 +15,10 @@ export default function Sidebar() {
 
   const {
     sessions,
-    setSessions,
-    messages,
     setMessages,
     activeSessionId,
     setActiveSessionId,
+    loadSessions
   } = useChat();
 
   useEffect(() => {
@@ -28,16 +26,6 @@ export default function Sidebar() {
       loadSessions();
     }
   }, [isAuthenticated]);
-
-  async function loadSessions() {
-    try {
-      const sessions = await getSessions();
-
-      setSessions(sessions);
-    } catch (error) {
-      console.error(error);
-    }
-  }
 
   async function handleSessionClick(sessionId: string) {
     try {

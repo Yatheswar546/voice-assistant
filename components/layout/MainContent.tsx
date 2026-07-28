@@ -18,8 +18,11 @@ export default function MainContent() {
   const {
     messages,
     setMessages,
+    activeSessionId,
+    setActiveSessionId,
     isLoading,
     setIsLoading,
+    loadSessions,
   } = useChat();
 
   // const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -64,7 +67,13 @@ export default function MainContent() {
     try {
       const assistantResponse = await sendMessage({
         message: trimmedMessage,
+        sessionId: activeSessionId ?? undefined,
       });
+
+      if(!activeSessionId && assistantResponse.sessionId) {
+        setActiveSessionId(assistantResponse.sessionId);
+        await loadSessions();
+      }
 
       const assistantMessage: ChatMessage = {
         role: "assistant",

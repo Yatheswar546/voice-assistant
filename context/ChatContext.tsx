@@ -9,6 +9,7 @@ import {
 
 import type { ChatMessage } from "@/types/chat";
 import type { ChatSession } from "@/types/session";
+import { getSessions } from "@/services/session.service";
 
 interface ChatContextType {
   messages: ChatMessage[];
@@ -21,9 +22,9 @@ interface ChatContextType {
     React.SetStateAction<ChatSession[]>
   >;
 
-  activeSessionId?: string;
+  activeSessionId?: string | null;
   setActiveSessionId: React.Dispatch<
-    React.SetStateAction<string | undefined>
+    React.SetStateAction<string | null>
   >;
 
   isLoading: boolean;
@@ -32,11 +33,26 @@ interface ChatContextType {
   >;
 
   clearChat: () => void;
+
+  loadSessions: () => Promise<void>;
 }
 
 const ChatContext = createContext<
   ChatContextType | undefined
 >(undefined);
+
+export function useChat() {
+
+  const context = useContext(ChatContext);
+
+  if (!context) {
+    throw new Error(
+      "useChat must be used inside ChatProvider"
+    );
+  }
+
+  return context;
+}
 
 export function ChatProvider({
   children,
@@ -49,7 +65,7 @@ export function ChatProvider({
   const [sessions, setSessions] = useState<ChatSession[]>([]);
 
   const [activeSessionId, setActiveSessionId] =
-    useState<string>();
+    useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,6 +73,15 @@ export function ChatProvider({
     setSessions([]);
     setMessages([]);
     setActiveSessionId(null);
+  };
+
+  const loadSessions = async () => {
+    try {
+      const sessions = await getSessions();
+      setSessions(sessions);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -71,22 +96,10 @@ export function ChatProvider({
         isLoading,
         setIsLoading,
         clearChat,
+        loadSessions,
       }}
     >
       {children}
     </ChatContext.Provider>
   );
-}
-
-export function useChat() {
-
-  const context = useContext(ChatContext);
-
-  if (!context) {
-    throw new Error(
-      "useChat must be used inside ChatProvider"
-    );
-  }
-
-  return context;
 }
