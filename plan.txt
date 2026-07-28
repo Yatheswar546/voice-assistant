@@ -1089,6 +1089,6 @@ Phase 3: Sidebar Integration
 
 Phase 6
         Rename
-        Delete
+        ✅ Delete
         Search (later)
         Pin chats (optional)

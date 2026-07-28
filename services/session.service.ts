@@ -92,3 +92,24 @@ export async function deleteSession(
     );
   }
 }
+
+export async function renameSession(
+  sessionId: string,
+  title: string
+) {
+  const response = await fetch(`/api/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to rename session.");
+  }
+
+  return response.json();
+}

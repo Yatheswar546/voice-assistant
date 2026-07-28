@@ -52,3 +52,66 @@ export async function DELETE(
     );
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ sessionId: string }>;
+  }
+) {
+  try {
+    await connectDB();
+
+    const { sessionId } = await params;
+
+    const { title } = await request.json();
+
+    if (!title || !title.trim()) {
+      return NextResponse.json(
+        {
+          error: "Title is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const updatedSession = await ChatSession.findByIdAndUpdate(
+      sessionId,
+      {
+        title: title.trim(),
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!updatedSession) {
+      return NextResponse.json(
+        {
+          error: "Session not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    return NextResponse.json(updatedSession);
+
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to rename session.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
