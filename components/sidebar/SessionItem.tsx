@@ -101,7 +101,7 @@ export default function SessionItem({
           }`}
       >
         {/* Session Button */}
-        <div className="flex-1 px-4 py-3">
+        <div className="min-w-0 flex-1 px-4 py-3">
 
           {isEditing ? (
             <input
@@ -124,7 +124,7 @@ export default function SessionItem({
           ) : (
             <button
               onClick={() => onClick(id)}
-              className="w-full truncate text-left"
+              className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-left"
             >
               {title}
             </button>
@@ -135,7 +135,7 @@ export default function SessionItem({
         {/* Dropdown Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger>
-            <button className="mr-2 rounded-md p-2 opacity-0 transition-opacity hover:bg-white/10 group-hover:opacity-100">
+            <button className="mr-2 shrink-0 rounded-md p-2 opacity-0 transition-opacity hover:bg-white/10 group-hover:opacity-100">
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>

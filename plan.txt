@@ -212,7 +212,7 @@ This makes responses feel more natural and engaging.
 
 ---
 
-# 8. Sidebar Functionality
+✅ 8. Sidebar Functionality
 
 Complete the sidebar.
 
@@ -597,7 +597,7 @@ Save Updated Conversation
 
 This gives true multi-turn conversations.
 
-Phase 6 - Sidebar Functionality:
+✅ Phase 6 - Sidebar Functionality:
 
 Once sessions exist in MongoDB, the sidebar can show
 
@@ -612,11 +612,16 @@ Phase 7 - UI Improvements:
 
 We'll add
 
-Typing animation
+Typing animation & Smooth animations
+Loading skeletons
 Markdown rendering
 Code highlighting
 Better loading states
 Better error handling
+Better spacing
+Improved typography
+Accessibility improvements
+Consistent hover and focus effects
 
 Phase 8 - Responsive Design
 
@@ -625,6 +630,12 @@ Desktop
 Tablet
 ↓
 Mobile
+
+Mobile layout
+Tablet layout
+Responsive sidebar
+Mobile navigation
+Touch-friendly interactions
 
 Phase 9 - Deployment:
 
@@ -636,9 +647,19 @@ Production Environment Variables
 ↓
 Testing
 
+(Future Enhancements) - Voice Assistant Experience
+
+Microphone UI
+Voice recording indicators
+Waveform animations
+Streaming responses (if implemented)
+Audio playback controls
+
 
 ***OUR ROADMAP***
 ✔ Frontend
+        ↓
+✔ Typing Animation (a little not much)
         ↓
 ✔ Voice Features
         ↓
@@ -650,15 +671,13 @@ Testing
         ↓
 ✔ Authentication
         ↓
-Chat Persistence
+✔ Chat Persistence
         ↓
-Sidebar Sessions
+✔ Conversation Memory
         ↓
-Conversation Memory
+✔ Sidebar Sessions
         ↓
 Markdown
-        ↓
-Typing Animation
         ↓
 Responsive UI
         ↓
@@ -731,15 +750,6 @@ Updated Authentication Roadmap
 
 =====================================
 
-Remaining features to add in future during sidebar functionalities
-
-Protected Features:
-Protect "New Session"
-Protect /api/chat
-Load the user's sessions
-Display chat history
-Ensure only authenticated users can create new conversations
-
 Middleware (Optional):
 Add middleware.ts
 Redirect unauthenticated users before rendering protected routes
@@ -766,68 +776,6 @@ app/api/
 
 ==================================================================================
 ==================================================================================
-
-Chat Persistence & Conversation Memory Roadmap (after Authentication)
-
-✅Module 4.1
-Create Chat Session
-When a logged-in user sends their first message:
-
-User
-↓
-Does active session exist?
-↓
-No
-↓
-Create ChatSession document
-↓
-Return sessionId
-
-Nothing else yet. Just create the session.
-
-✅Module 4.2
-Save User Message
-
-User types
-↓
-Message model
-↓
-MongoDB
-
-Only the user's message gets stored.
-
-✅Module 4.3
-
-Call Gemini
-Exactly as we already do.
-
-✅Module 4.4
-Save Assistant Message
-
-Gemini Reply
-↓
-Message Model
-↓
-MongoDB
-
-✅Module 4.5
-Return Messages
-Return the updated conversation to the frontend.
-
-✅Module 4.6
-Load Conversation
-
-When the page opens:
-
-Session ID
-↓
-MongoDB
-↓
-All Messages
-↓
-Chat Window
-
-=============================================================
 
 Future enhancements for Conversation memory
 Version 1.0
@@ -882,94 +830,12 @@ Version 3.0 – Intelligent Agent Memory
 ==================================================================================
 ==================================================================================
 
-Complete Roadmap for Sidebar Module:
-
---------------
-
-Module 11.5 - Session Grouping
-
-This is a surprisingly interesting feature. MongoDB will return something like
-
-Session A
-Created yesterday
-
-Session B
-Created today
-
-Session C
-Created last week
-
-Session D
-Created 2 months ago
-
-We need to group them into
-
-Today
-
-Yesterday
-
-Previous 7 Days
-
-Previous 30 Days
-
-Older
-
-This grouping should not happen inside the UI. It belongs in a utility/helper.
-Something like
-
-"utils/groupSessions.ts"
-or
-"services/sessionGrouping.ts"
-
-That keeps React components very clean.
-
---------------
-
-Module 11.8 - Future Sidebar Features
+Pending works in Sidebar Features
 
 These can come after the core functionality.
-      |-> Rename Chat  ✅
-      |-> Delete Chat  ✅
       |-> Search Sessions
       |-> Pin Chats
       |-> Infinite Scroll
       |-> Mobile Sidebar
       |-> Drag Resize
       |-> Collapse Sidebar
-
----------------
-
-=================================
-
-Updated RoadMap for Sidebar
-
-✅ Phase 1: Backend Foundation
-        ✅ Create session types
-        ✅ Create Session Service (Backend)
-        ✅ Create Sessions API
-        ✅ Test API using Postman
-
-✅ Phase 2: Frontend Foundation
-        ✅ Create ChatContext
-        ✅ Wrap the application with ChatContext
-        ✅ Verify Context works
-
-✅ Phase 3: Sidebar Integration
-        ✅ Load sessions from API
-        ✅ Replace hardcoded sessions
-        ✅ Group sessions (Today, Yesterday, Earlier)
-        ✅ Display "Login to view chat history" for guests
-
-✅ Phase 4: Session Switching
-        ✅ Load messages when clicking a session
-        ✅ Update ChatWindow
-
-✅ Phase 5: New Session
-        ✅ Reset current conversation
-        ✅ Create new session only after first message
-
-Phase 6
-        ✅ Rename
-        ✅ Delete
-        Search (later)
-        Pin chats (optional)

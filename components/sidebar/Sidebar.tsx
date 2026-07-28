@@ -90,7 +90,7 @@ export default function Sidebar() {
       </div>
 
       {/* Session List */}
-      <div className="mt-10 flex-1 space-y-8 overflow-y-auto">
+      <div className="mt-10 flex-1 overflow-x-hidden overflow-y-auto space-y-8">
 
         {!isAuthenticated ? (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-400">
