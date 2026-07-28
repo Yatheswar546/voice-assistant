@@ -120,7 +120,7 @@ export async function processChat({
     contents: geminiConversationHistory,
   });
 
-  const reply = response.text;
+  const reply = response.text ?? "Sorry, I couldn't generate a response.";
 
   if (currentSessionId) {
     await saveAssistantMessage(

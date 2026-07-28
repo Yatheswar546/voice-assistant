@@ -5,6 +5,7 @@ export interface ChatRequest {
 
 export interface ChatResponse {
   reply: string;
+  sessionId?: string;
 }
 
 export interface ApiError {

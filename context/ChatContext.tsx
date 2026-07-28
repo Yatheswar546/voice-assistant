@@ -22,7 +22,7 @@ interface ChatContextType {
     React.SetStateAction<ChatSession[]>
   >;
 
-  activeSessionId?: string | null;
+  activeSessionId: string | null;
   setActiveSessionId: React.Dispatch<
     React.SetStateAction<string | null>
   >;

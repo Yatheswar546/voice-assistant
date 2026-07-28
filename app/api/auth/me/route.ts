@@ -8,6 +8,18 @@ export async function GET() {
     // Verify JWT from the auth-token cookie
     const payload = await getAuthenticatedUser();
 
+    if (!payload) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
     // Fetch the user from MongoDB
     const user = await getUserById(payload.userId);
 
