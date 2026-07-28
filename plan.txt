@@ -1058,18 +1058,6 @@ These can come after the core functionality.
 
 ---------------
 
-context/
-    ChatContext.tsx
-
-This context can hold:
-      -> sessions
-      -> currentSessionId
-      -> messages
-      -> setMessages
-      -> setSessions
-      -> setCurrentSession
-      -> isLoadingConversation
-
 =================================
 
 Updated RoadMap for Sidebar
@@ -1095,11 +1083,12 @@ Phase 3: Sidebar Integration
         ✅ Load messages when clicking a session
         ✅ Update ChatWindow
 
-Phase 5: New Session
-        Reset current conversation
-        Create new session only after first message
+✅ Phase 5: New Session
+        ✅ Reset current conversation
+        ✅ Create new session only after first message
 
 Phase 6
         Rename
         Delete
         Search (later)
+        Pin chats (optional)
