@@ -21,7 +21,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function AuthButton() {
+interface AuthButtonProps {
+  mobile?: boolean;
+}
+
+export default function AuthButton({
+  mobile = false,
+}: AuthButtonProps) {
   const {
     user,
     isAuthenticated,
@@ -60,7 +66,11 @@ export default function AuthButton() {
         <Button
           onClick={() => setLoginOpen(true)}
           variant="outline"
-          className="h-11 rounded-full border-blue-500 px-6 text-base text-white hover:border-blue-400 hover:bg-blue-500/10"
+          className={
+            mobile
+              ? "h-11 w-full rounded-xl border-blue-500 text-base text-white hover:border-blue-400 hover:bg-blue-500/10"
+              : "h-11 rounded-full border-blue-500 px-6 text-base text-white hover:border-blue-400 hover:bg-blue-500/10"
+          }
         >
           Login
         </Button>
@@ -93,7 +103,11 @@ export default function AuthButton() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="h-11 gap-2 rounded-full border-white/15 bg-transparent px-5 text-base text-white hover:border-blue-400 hover:bg-white/5"
+          className={
+            mobile
+              ? "flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-transparent text-base text-white hover:border-blue-400 hover:bg-white/5"
+              : "h-11 gap-2 rounded-full border-white/15 bg-transparent px-5 text-base text-white hover:border-blue-400 hover:bg-white/5"
+          }
         >
           <User className="h-4 w-4" />
 

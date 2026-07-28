@@ -11,7 +11,13 @@ import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import SettingsPanel from "../voice/SettingsPanel";
 import { useChat } from "@/context/ChatContext";
 
-export default function MainContent() {
+interface MainContentProps {
+  onOpenSidebar: () => void;
+}
+
+export default function MainContent({
+  onOpenSidebar,
+}: MainContentProps) {
 
   const [input, setInput] = useState("");
 
@@ -24,10 +30,6 @@ export default function MainContent() {
     setIsLoading,
     loadSessions,
   } = useChat();
-
-  // const [messages, setMessages] = useState<ChatMessage[]>([]);
-
-  // const [isLoading, setIsLoading] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -111,6 +113,7 @@ export default function MainContent() {
         isSpeaking={isSpeaking}
         onInterrupt={stop}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSidebar={onOpenSidebar}
       />
 
       <SettingsPanel
