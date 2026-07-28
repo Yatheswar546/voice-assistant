@@ -9,6 +9,7 @@ import { useChat } from "@/context/ChatContext";
 import { getSessionMessages } from "@/services/message.service";
 import { useAuth } from "@/hooks/useAuth";
 import { deleteSession, renameSession } from "@/services/session.service";
+import { groupSessions } from "@/utils/groupSessions";
 
 export default function Sidebar() {
 
@@ -21,6 +22,8 @@ export default function Sidebar() {
     setActiveSessionId,
     loadSessions
   } = useChat();
+
+  const groupedSessions = groupSessions(sessions);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -94,14 +97,20 @@ export default function Sidebar() {
             Login to view chat history
           </div>
         ) : (
-          <SessionGroup
-            title="All Chats"
-            sessions={sessions}
-            activeSessionId={activeSessionId}
-            onSessionClick={handleSessionClick}
-            onDelete={handleDeleteSession}
-            onRename={handleRenameSession}
-          />
+          <>
+            {groupedSessions.map((group) => (
+              <SessionGroup
+                key={group.title}
+                title={group.title}
+                sessions={group.sessions}
+                activeSessionId={activeSessionId}
+                onSessionClick={handleSessionClick}
+                onDelete={handleDeleteSession}
+                onRename={handleRenameSession}
+              />
+              ))
+            }
+          </>
         )}
 
       </div>
