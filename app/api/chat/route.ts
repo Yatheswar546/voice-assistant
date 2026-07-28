@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
 
-    // console.error("Chat API Error:", error);
+    console.error("Chat API Error:", error);
 
     return NextResponse.json(
       {

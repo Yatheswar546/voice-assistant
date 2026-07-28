@@ -114,6 +114,22 @@ export async function processChat({
   //   JSON.stringify(geminiConversationHistory, null, 2)
   // );
 
+  // If there is no conversation history (guest user's first message),
+  // send the current message directly to Gemini.
+  const contents =
+      geminiConversationHistory.length > 0
+        ? geminiConversationHistory
+        : [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: message,
+                },
+              ],
+            },
+        ];
+
   // Send message to Gemini
   const response = await ai.models.generateContent({
     model: AI_CONFIG.MODEL,
