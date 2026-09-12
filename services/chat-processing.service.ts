@@ -1,4 +1,4 @@
-import { ai } from "@/lib/gemini";
+import { generateChatCompletion } from "@/lib/ai";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { ChatSession } from "@/models/ChatSession";
 import { Message } from "@/models/Message";
@@ -55,14 +55,12 @@ async function getConversationHistory(sessionId: string) {
   return orderedMessages;
 }
 
-function convertMessagesToGeminiHistory(messages: any[]) {
+function convertMessagesToAIHistory(
+  messages: any[]
+): Array<{ role: "user" | "assistant" | "system"; content: string }> {
   return messages.map((message) => ({
-    role: message.role === "assistant" ? "model" : "user",
-    parts: [
-      {
-        text: message.content,
-      },
-    ],
+    role: message.role === "assistant" ? "assistant" : "user",
+    content: message.content,
   }));
 }
 
@@ -70,17 +68,11 @@ export async function processChat({
   message,
   sessionId,
 }: ProcessChatParams): Promise<ProcessChatResponse> {
-
-  // Get logged-in user (null for guests)
   const user = await getAuthenticatedUser();
-
-  // console.log("Authenticated User:", user);
 
   let currentSessionId = sessionId ?? null;
 
-  // Create a new chat session for logged-in users
   if (user && !currentSessionId) {
-
     const title =
       message.length > 50
         ? message.substring(0, 50) + "..."
@@ -92,57 +84,35 @@ export async function processChat({
     });
 
     currentSessionId = session._id.toString();
-
-    // console.log("New Chat Session Created:", currentSessionId);
   }
 
   if (currentSessionId) {
     await saveUserMessage(currentSessionId, message);
   }
 
-  let conversationHistory = [];
+  let conversationHistory: any[] = [];
 
   if (currentSessionId) {
     conversationHistory = await getConversationHistory(currentSessionId);
   }
 
-  const geminiConversationHistory =
-    convertMessagesToGeminiHistory(conversationHistory);
+  const aiMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [
+    ...convertMessagesToAIHistory(conversationHistory),
+    {
+      role: "user",
+      content: message,
+    },
+  ];
 
-  // console.log(
-  //   "Gemini Conversation History:",
-  //   JSON.stringify(geminiConversationHistory, null, 2)
-  // );
-
-  // If there is no conversation history (guest user's first message),
-  // send the current message directly to Gemini.
-  const contents =
-      geminiConversationHistory.length > 0
-        ? geminiConversationHistory
-        : [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: message,
-                },
-              ],
-            },
-        ];
-
-  // Send message to Gemini
-  const response = await ai.models.generateContent({
+  const reply = await generateChatCompletion({
     model: AI_CONFIG.MODEL,
-    contents: geminiConversationHistory,
+    messages: aiMessages,
+    temperature: AI_CONFIG.TEMPERATURE,
+    maxOutputTokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
   });
 
-  const reply = response.text ?? "Sorry, I couldn't generate a response.";
-
   if (currentSessionId) {
-    await saveAssistantMessage(
-      currentSessionId,
-      reply
-    );
+    await saveAssistantMessage(currentSessionId, reply);
   }
 
   return {

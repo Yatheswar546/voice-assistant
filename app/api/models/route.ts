@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { ai } from "@/lib/gemini";
+import { listAvailableModels } from "@/lib/ai";
 
 export async function GET() {
   try {
-    const models = await ai.models.list();
+    const models = await listAvailableModels();
 
-    return NextResponse.json(models);
+    return NextResponse.json({ models });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message },
