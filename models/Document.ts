@@ -55,4 +55,8 @@ const DocumentSchema = new Schema(
 DocumentSchema.index({ userId: 1, createdAt: -1 });
 
 export const Document =
+<<<<<<< HEAD
   models.Document || model("Document", DocumentSchema);
+=======
+  models.Document || model("Document", DocumentSchema);
+>>>>>>> b7f5a276967d55b1f5a7ecf5fa7e2e08d48e61b5
