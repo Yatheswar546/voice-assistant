@@ -639,3 +639,66 @@ These can come after the core functionality.
       |-> Mobile Sidebar
       |-> Drag Resize
       |-> Collapse Sidebar
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+---------------------------- RAG PHASE STARTED -----------------------------------------------
+
+PHASE 1: RAG INGESTION
+
+01: Data Models (Document, DocumentChunk)
+
+02: Upload API (UI also need to be done)
+multipart/form-data
+file size validation
+MIME/type validation
+authenticated-user ownership
+
+03: File Validation
+allowed extensions
+MIME validation
+size limits
+safe filename handling
+
+04: Parser Architecture
+Parser
+ ├── PDFParser
+ ├── DocxParser
+ ├── ExcelParser
+ └── ImageParser
+
+05: Content extraction
+PDF text
+DOCX text
+spreadsheet data
+image understanding through Gemini
+
+06: Cleaning
+whitespace normalization
+unnecessary characters
+empty content
+preserving useful structure
+
+07: Chunking
+chunk size
+overlap
+metadata
+page/sheet information where available
+
+08: Embeddings
+embedding model
+embedding generation
+vector dimensions
+batching where useful
+
+09: MongoDB Vector Search
+vector field
+Atlas Vector Search index
+$vectorSearch
+storing chunk metadata
+preparing for retrieval
