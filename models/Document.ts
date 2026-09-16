@@ -27,6 +27,12 @@ const DocumentSchema = new Schema(
       min: 0,
     },
 
+    gridFsFileId: {
+      type: Schema.Types.ObjectId,
+      default: null,
+      index: true,
+    },
+
     status: {
       type: String,
       enum: ["uploaded", "processing", "completed", "failed"],

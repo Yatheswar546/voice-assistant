@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { Document } from "@/models/Document";
 import { validateUploadedFile } from "@/lib/rag/file-validator";
 import { success } from "zod";
+import { uploadFileToGridFS } from "@/lib/rag/gridfs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,6 +62,24 @@ export async function POST(req: NextRequest) {
       size: file.size,
       status: "uploaded",
     });
+
+    try {
+      const gridFsFileId = await uploadFileToGridFS(file, {
+        documentId: document._id.toString(),
+        userId: user.userId.toString(),
+        mimeType: file.type,
+      });
+
+      document.gridFsFileId = gridFsFileId;
+      await document.save();
+    } catch(error) {
+      await Document.findByIdAndUpdate(document._id, {
+        status: "failed",
+        errorMessage: "Failed to store uploaded file.",
+      });
+
+      throw(error);
+    }
 
     return NextResponse.json(
       {

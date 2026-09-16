@@ -662,9 +662,9 @@ authenticated-user ownership ✅
 
 03: File Validation
 file size validation
-MIME/type validation
-allowed extensions
-MIME validation
+MIME/type validation ✅
+allowed extensions ✅
+MIME validation ✅
 size limits
 safe filename handling
 
