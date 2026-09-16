@@ -670,6 +670,7 @@ safe filename handling
 
 04: Parser Architecture
 Parser
+ ├── Parser factory
  ├── PDFParser
  ├── DocxParser
  ├── ExcelParser
