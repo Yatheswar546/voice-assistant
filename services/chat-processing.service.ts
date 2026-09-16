@@ -88,17 +88,6 @@ export async function processChat({
     }
   }
 
-  if (user && currentSessionId) {
-    const session = await ChatSession.findOne({
-      _id: currentSessionId,
-      userId: user.userId,
-    });
-
-    if (!session) {
-      throw new Error("Session not found.");
-    }
-  }
-
   if (user && !currentSessionId) {
     const title =
       message.length > 50
