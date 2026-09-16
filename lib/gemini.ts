@@ -32,6 +32,53 @@ export async function generateGeminiChatCompletion({
   return response.text ?? "Sorry, I couldn't generate a response.";
 }
 
+export async function generateGeminiImageDescription({
+  model,
+  image,
+  mimeType,
+}: {
+  model: string;
+  image: Buffer;
+  mimeType: string;
+}) {
+  const base64Image = image.toString("base64");
+
+  const response = await geminiAi.models.generateContent({
+    model,
+    contents: [
+      {
+        parts: [
+          {
+            inlineData: {
+              mimeType,
+              data: base64Image,
+            },
+          },
+          {
+            text: `
+Analyze this image for a document retrieval system.
+
+Extract all meaningful information visible in the image, including:
+- Text
+- Headings
+- Labels
+- Tables
+- Important visual information
+- Charts or diagrams
+- Relationships between visual elements
+
+Return a clear, factual textual representation of the image.
+Do not invent information that is not visible.
+            `.trim(),
+          },
+        ],
+      },
+    ],
+  });
+
+  return response.text ?? "";
+}
+
 export async function listGeminiModels() {
   const response = await geminiAi.models.list();
   return ((response as any)?.models ?? response ?? []) as any[];
