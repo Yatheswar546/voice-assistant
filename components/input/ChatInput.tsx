@@ -1,4 +1,5 @@
 import VoiceButton from "./VoiceButton";
+import FileUploadButton from "./FileUploadButton";
 
 interface ChatInputProps {
   input: string;
@@ -23,6 +24,8 @@ export default function ChatInput({
   return (
     <footer className="border-t border-white/10 px-4 py-2 lg:px-12 lg:py-4">
       <div className="flex items-center gap-3 rounded-full border border-white/10 bg-[#16171D] px-4 py-2 shadow-[0_16px_45px_rgba(0,0,0,0.22)] lg:gap-4 lg:px-8 lg:py-3">
+
+        <FileUploadButton isLoading={isLoading}/>
 
         <input
           type="text"

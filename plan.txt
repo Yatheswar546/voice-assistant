@@ -651,9 +651,12 @@ These can come after the core functionality.
 
 PHASE 1: RAG INGESTION
 
-01: Data Models (Document, DocumentChunk)
+01: Data Models ✅ 
+Document ✅
+DocumentChunk ✅
 
-02: Upload API (UI also need to be done)
+02: Upload API 
+UI also need to be done ✅
 multipart/form-data
 file size validation
 MIME/type validation
