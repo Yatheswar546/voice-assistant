@@ -1,376 +1,367 @@
-# Voice Assistant — Version 1.0 Project Brief
+# Voice Assistant — Complete Project Handoff
 
-> **Purpose:** Durable technical, product, handoff, and interview reference for the `voice-assistant` repository.
->
-> **Audit basis:** repository state at commit `926dda6` (`main`), reviewed on 4 August 2026. This document describes code that exists in the repository, distinguishes verified behavior from roadmap intent, and does not expose secret values.
+> **Repository:** `voice-assistant`<br>
+> **Audited revision:** `bf0012d` (`ollama-api-used`) on `main`<br>
+> **Audit date:** 12 September 2026<br>
+> **Audience:** future engineering, product, QA, and DevOps contributors
 
-## 1. Executive Summary
+## 1. Purpose and Current State
 
-Voice Assistant is a full-stack, browser-based AI conversation application. It combines a responsive Next.js interface, Gemini-powered responses, MongoDB-backed accounts and conversation history, JWT-cookie authentication, and browser-native speech recognition and speech synthesis.
+Voice Assistant is a full-stack web application for text and voice-enabled AI conversations. It provides a responsive chat UI, optional account authentication, MongoDB-backed conversation history for signed-in users, browser-native speech input/output, and a provider abstraction that now supports **Ollama and Google Gemini**.
 
-The project demonstrates a well-chosen full-stack learning architecture:
+The app is a Next.js 16 App Router project. The current local configuration selects **Ollama** and requests `gemma4:31b`; Gemini remains available as a configurable alternative. AI replies are non-streaming: the UI waits for a complete answer, stores it for a persisted chat, then optionally speaks it aloud.
 
-- **Frontend:** React client components, reusable UI primitives, Tailwind CSS, responsive desktop/mobile layouts, React Context state management, and accessible dialog/menu foundations.
-- **Backend:** Next.js App Router route handlers, a services layer, Zod validation for authentication, Mongoose data models, and structured API client helpers.
-- **AI:** Google GenAI SDK integration with session-based conversational context, retaining the latest 20 persisted messages for each Gemini request.
-- **Voice:** Web Speech API input and output, configurable voice/rate/pitch/volume, auto-speak, preview, reset, and local preference persistence.
-- **Product UX:** account flows, session history grouped by recency, load/rename/delete chat controls, mobile sidebar, chat status states, automatic scroll, and loading feedback.
+The optimized production build passes at the audited revision. `npm run lint` does not pass; its exact result is listed in [Verification and quality status](#13-verification-and-quality-status). There is no automated test suite or CI workflow in the repository.
 
-It is a strong portfolio prototype and demonstrates meaningful end-to-end engineering. A successful optimized production build was verified during this audit. However, it should not yet be represented as a fully production-ready deployment: lint does not pass, automated tests/CI/deployment evidence are absent, guest chat has a confirmed code-path bug, and session mutations are missing authorization and ownership checks. Section 12 lists the concrete release blockers.
+## 2. Product Capabilities
 
-## 2. Product Scope and User Value
-
-### Primary users
-
-1. **Guest users** can open the assistant, type or dictate a prompt, and use local voice controls. Guest conversations are intended to be non-persistent.
-2. **Registered users** can create an account, authenticate through a seven-day HTTP-only session cookie, retain chat sessions in MongoDB, reopen them, rename them, and delete them.
-
-### Core user journeys
-
-| Journey | Implemented behavior |
+| Area | Current behavior |
 | --- | --- |
-| Ask a question | User writes a prompt or dictates it; the UI displays a thinking state and sends it to Gemini. |
-| Hear an answer | When Auto Speak is enabled, the browser reads the returned answer using the chosen speech-synthesis settings. |
-| Create an account | The registration form validates locally and server-side, hashes the password, and creates a MongoDB user. |
-| Sign in and restore a session | Login issues an HTTP-only JWT cookie. `AuthProvider` calls `/api/auth/me` when the app loads to restore the profile state. |
-| Start a persisted chat | For an authenticated user with no selected session, the first message creates a `ChatSession`; user and assistant messages are stored. |
-| Continue a prior chat | Sidebar session selection fetches persisted messages; new requests use the selected session ID and recent history as Gemini context. |
-| Organize chats | Sidebar groups sessions by `updatedAt` into Today, Yesterday, Previous 7 Days, and Older; sessions can be renamed or deleted. |
-| Configure voice | Settings panel changes selected browser voice, rate, pitch, volume, and auto-speak. Preferences live in localStorage and update across tabs. |
+| AI chat | A user sends a text prompt and receives one complete AI response. The server chooses Ollama or Gemini from environment configuration. |
+| Conversation context | For persisted chats, the latest 20 stored messages are loaded in chronological order and sent with the new prompt. |
+| Guest use | A user can use the chat UI without signing in. Guest messages are not stored, and no session ID is returned. MongoDB is nevertheless required because the chat route connects before processing. |
+| Accounts | Registration, login, logout, and session restoration use bcrypt password hashes and a JWT in an HTTP-only cookie. |
+| Chat history | Signed-in users get persisted sessions, session selection, message loading, rename, delete, and recency grouping. |
+| Voice input | Browser Web Speech recognition fills the chat input; configured language is `en-IN`. Browser support is required. |
+| Voice output | Browser speech synthesis can auto-read answers. The user can choose a voice and adjust rate, pitch, volume, auto-speak, preview, and reset. |
+| Responsive UX | A desktop sidebar becomes a slide-in sidebar on smaller screens. `/` and `/assistant` show the same application shell. |
 
 ## 3. Technology Stack
 
-| Layer | Technology | How it is used |
+| Layer | Technology | Responsibility |
 | --- | --- | --- |
-| Framework | Next.js `16.2.10`, App Router | Pages, layouts, API route handlers, static/dynamic production build. |
-| UI | React `19.2.4`, TypeScript | Client components and typed application state. |
-| Styling | Tailwind CSS `4`, `tw-animate-css`, shadcn theme CSS | Dark responsive design system and utility styling. |
-| UI primitives | Base UI, Lucide React, CVA, `clsx`, `tailwind-merge` | Buttons, dialogs, dropdowns, icons, variants, utility merging. |
-| Forms | React Hook Form, Zod, `@hookform/resolvers` | Auth form state and client validation. |
-| Database | MongoDB + Mongoose `9.8.0` | Users, chat sessions, messages, and prepared voice-settings schema. |
-| Authentication | `bcryptjs`, `jsonwebtoken` | Password hashing and seven-day JWT embedded in HTTP-only cookie. |
-| AI | `@google/genai` | Gemini `models/gemini-flash-latest` response generation. |
-| Voice | Browser Web Speech APIs | `SpeechRecognition`/`webkitSpeechRecognition` and `speechSynthesis`. |
-| Networking | Fetch and Axios | Chat/session requests and authentication client. |
-| Notifications | Sonner | Login, registration, and logout confirmation/error toasts. |
+| Framework | Next.js `16.2.10`, App Router | Pages, root layout, dynamic route handlers, optimized builds. |
+| UI | React `19.2.4`, TypeScript | Client-side shell, contexts, hooks, and typed components. |
+| Styling | Tailwind CSS 4, `tw-animate-css`, shadcn/base-nova configuration | Dark responsive visual system and UI primitives. |
+| Database | MongoDB + Mongoose `9.8.0` | Users, sessions, and messages. |
+| Authentication | `bcryptjs`, `jsonwebtoken` | Password hash comparison and seven-day JWT cookie. |
+| AI | `@google/genai` plus native `fetch` to Ollama HTTP API | Provider-specific chat generation and model listing. |
+| Forms | React Hook Form, Zod, `@hookform/resolvers` | Client and server authentication validation. |
+| Voice | Web Speech API | Speech recognition and speech synthesis in supported browsers. |
+| UI support | Lucide, Base UI, CVA, `clsx`, `tailwind-merge`, Sonner | Icons, primitives, variants, class merging, notifications. |
+| Tooling | ESLint 9, TypeScript 5, PostCSS | Static checks and Tailwind transformation. |
 
-Installed but not materially used by the current feature path: `framer-motion`, `zustand`, and several starter/common visual components.
+Installed packages not found on the active feature path include `axios`, `framer-motion`, and `zustand` (Axios may be available for future work but current API calls use `fetch`).
 
-## 4. Architecture
+## 4. Repository Structure
+
+Generated and private directories (`node_modules/`, `.next/`, `.git/`, `.env.local`) are intentionally omitted. The root `.gitignore` ignores `.env*`, build output, and `*.txt`; `folder-structure.txt`, `plan.txt`, and `status.txt` exist locally but are untracked because of that rule.
+
+```text
+voice-assistant/
+├── .postman/
+│   └── resources.yaml
+├── app/                                  # App Router routes and global styling
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/route.ts
+│   │   │   ├── logout/route.ts
+│   │   │   ├── me/route.ts
+│   │   │   └── register/route.ts
+│   │   ├── chat/route.ts
+│   │   ├── models/route.ts
+│   │   ├── sessions/
+│   │   │   ├── [sessionId]/messages/route.ts
+│   │   │   ├── [sessionId]/route.ts
+│   │   │   └── route.ts
+│   │   └── test/route.ts
+│   ├── assistant/page.tsx
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── assistant/{AssistantAvatar,AssistantBubble,AssistantHeader,AssistantStatus}.tsx
+│   ├── auth/{AuthButton,AuthDialog,LoginDialog,RegisterDialog}.tsx
+│   ├── chat/{AssistantMessage,CategoryBadge,ChatWindow,LoadingMessage,MessageList,TypingDots,UserMessage}.tsx
+│   ├── common/{Button,GlassCard,GlowOrb,Logo}.tsx
+│   ├── input/{ChatInput,VoiceButton}.tsx
+│   ├── layout/{AppLayout,MainContent}.tsx
+│   ├── sidebar/{NewSessionButton,SessionGroup,SessionItem,Sidebar}.tsx
+│   ├── ui/{alert-dialog,button,dialog,dropdown-menu,input,label}.tsx
+│   └── voice/{AutoSpeakToggle,PitchSlider,PreviewButton,RateSlider,ResetVoiceButton,SettingsPanel,VoiceSelector,VolumeSlider}.tsx
+├── constants/voice.ts                    # Default browser voice settings
+├── context/{AuthContext,ChatContext,VoiceSettingsContext}.tsx
+├── hooks/{useAuth,useSpeechRecognition,useSpeechSynthesis,useVoiceSettings}.ts
+├── lib/{ai,auth,gemini,mongodb,ollama,utils}.ts
+├── models/{ChatSession,Message,User,VoiceSetting}.ts
+├── postman/globals/workspace.globals.yaml # Postman workspace globals
+├── public/                               # Starter SVG assets
+│   └── {file,globe,next,vercel,window}.svg
+├── schemas/{auth,authForm}.schema.ts
+├── services/
+│   ├── auth.client.ts
+│   ├── {auth,chat-processing,chat,message,session-processing,session}.service.ts
+├── settings/ai.config.ts                 # Environment-driven AI selection/settings
+├── types/{api,chat,message,session,voice}.ts
+├── types/speech.d.ts
+├── utils/{groupSessions,localStorage}.ts
+├── AGENTS.md                             # Repository-specific Next.js instruction
+├── CLAUDE.md
+├── README.md                             # Public readme; partially stale (Gemini-only wording)
+├── PROJECT_SUMMARY.md                    # This handoff document
+├── package.json / package-lock.json
+├── tsconfig.json
+├── eslint.config.mjs
+├── postcss.config.mjs
+├── components.json                        # shadcn component settings
+└── next.config.ts                         # Empty/default Next configuration
+```
+
+## 5. Runtime Architecture
 
 ```mermaid
 flowchart LR
-  U["Browser user"] --> UI["React client UI"]
-  UI --> AC["AuthContext"]
-  UI --> CC["ChatContext"]
-  UI --> VC["VoiceSettingsContext"]
-  UI -->|"Web Speech APIs"| WS["Recognition & synthesis"]
-  VC --> LS[("localStorage")]
-  UI -->|"fetch / axios"| API["Next.js route handlers"]
-  API --> AUTH["JWT cookie / auth service"]
-  API --> SVC["Chat & session services"]
-  AUTH --> DB[("MongoDB")]
-  SVC --> DB
-  SVC --> GEM["Google Gemini API"]
+  U[Browser user] --> UI[React client components]
+  UI --> AUTHCTX[AuthContext]
+  UI --> CHATCTX[ChatContext]
+  UI --> VOICECTX[VoiceSettingsContext]
+  UI --> SPEECH[Browser Web Speech APIs]
+  VOICECTX --> STORE[(browser localStorage)]
+  UI -->|same-origin fetch + cookie| API[Next.js route handlers]
+  API --> AUTHSVC[JWT auth helpers]
+  API --> CHATSVC[Chat and session services]
+  AUTHSVC --> DB[(MongoDB)]
+  CHATSVC --> DB
+  CHATSVC --> ADAPTER[lib/ai provider adapter]
+  ADAPTER --> OLLAMA[Ollama HTTP API]
+  ADAPTER --> GEMINI[Google GenAI API]
 ```
 
-### Code organization
-
-| Area | Responsibility |
-| --- | --- |
-| `app/` | App Router pages, root layout, CSS, and HTTP route handlers. |
-| `components/` | UI split by concern: assistant, auth, chat, input, layout, sidebar, UI primitives, voice. |
-| `context/` | Global client state for auth, chat/session state, and voice settings. |
-| `hooks/` | Auth re-export and browser speech/voice hooks. |
-| `services/` | Server business workflows and client-side API wrappers. |
-| `models/` | Mongoose schemas. |
-| `schemas/` | Zod authentication and form contracts. |
-| `lib/` | Mongo connection cache, JWT utilities, Gemini client, class-name helper. |
-| `types/`, `constants/`, `utils/` | Shared contracts, defaults, session grouping, defensive storage helpers. |
-
-### Rendering composition
+### Rendering and state composition
 
 ```text
 RootLayout
-├─ AuthProvider
-│  ├─ VoiceSettingsProvider
-│  │  └─ Page (/ or /assistant)
-│  │     └─ AppLayout
-│  │        └─ ChatProvider
-│  │           ├─ Sidebar
-│  │           └─ MainContent
-│  │              ├─ AssistantHeader
-│  │              ├─ SettingsPanel
-│  │              ├─ ChatWindow
-│  │              └─ ChatInput / VoiceButton
-│  └─ Sonner Toaster
+├── AuthProvider
+│   ├── VoiceSettingsProvider
+│   │   └── AppLayout (at / and /assistant)
+│   │       └── ChatProvider
+│   │           ├── Sidebar
+│   │           └── MainContent
+│   │               ├── AssistantHeader
+│   │               ├── SettingsPanel
+│   │               ├── ChatWindow
+│   │               └── ChatInput / VoiceButton
+│   └── Sonner toaster
 ```
 
-`/` and `/assistant` currently render the same application shell. The login dialog redirects to `/assistant`; this route is not server-protected, which supports guest use but means it is not a restricted member-only page.
+`app/layout.tsx` is a server layout that supplies metadata and fonts. Most interactive components are client components. Route handlers are dynamic server endpoints; the audited production build marks only `/` and `/assistant` as static pages.
 
-## 5. Feature Inventory and Completion Status
+## 6. Core Workflows
 
-| Feature | Status | Evidence / notes |
-| --- | --- | --- |
-| Responsive chat interface | Implemented | Desktop sidebar plus slide-in mobile sidebar; responsive headers/input. |
-| Text prompts and Gemini replies | Implemented for authenticated sessions | `POST /api/chat` invokes Gemini and renders a loading bubble. |
-| Guest prompts | **Blocked by bug** | The resolved `contents` value is not passed to Gemini; an empty history is sent for guests. See issue R1. |
-| Registration/login/logout | Implemented | Zod, bcrypt, JWT cookie, profile menu, session restore. |
-| Chat persistence | Implemented for authenticated sessions | ChatSession and Message documents are created/read. |
-| Conversation memory | Implemented | Most recent 20 stored messages are loaded newest-first and reversed before Gemini receives them. |
-| Session sidebar | Implemented | List, grouping, open, new local session, rename, delete UI. |
-| Session authorization | **Not implemented safely** | Delete/rename routes have no auth or ownership checks. See issue R2. |
-| Browser voice input | Implemented where browser supports it | Recognition language is `en-IN`; recognition result fills the text input. |
-| Browser voice output | Implemented | Voice settings and automatic speech synthesis. |
-| Voice preference server persistence | Not implemented | `VoiceSetting` schema exists but the live UI uses localStorage only. |
-| Markdown/code rendering | Not implemented | Assistant content is plain text with `white-space: pre-wrap`. |
-| Streaming AI responses | Not implemented | UI waits for complete Gemini reply, then appends it. |
-| Automated test suite | Not implemented | No test/spec files found. |
-| CI and verified deployment | Not evidenced in repository | No workflow/deployment configuration or public deployment URL present. |
+### 6.1 Send a chat message
 
-## 6. Data Model
+```text
+1. MainContent validates a non-empty input and appends the user message optimistically.
+2. services/chat.service.ts POSTs { message, sessionId? } to /api/chat.
+3. app/api/chat/route.ts opens/reuses the MongoDB connection and invokes processChat.
+4. processChat reads the JWT cookie, if present.
+5. For a signed-in user without a session, it creates ChatSession using the first prompt as title.
+6. For a persisted session, it saves the user message and fetches up to 20 newest messages, ordered oldest → newest.
+7. It builds provider-neutral messages, chooses AI_CONFIG.MODEL, and calls lib/ai.ts.
+8. lib/ai.ts routes to lib/ollama.ts or lib/gemini.ts.
+9. The completed reply is saved for persisted sessions and returned with sessionId.
+10. The UI appends the assistant reply, refreshes the sidebar for a newly created session, and calls speech synthesis when auto-speak is enabled.
+```
 
-### `User` (actively used)
+**Important implementation note:** the user message is stored before history is loaded and is then appended again to the outbound message list. For persisted chats, the newest prompt is therefore sent to the model twice. This is a known defect, not intended context behavior.
 
-| Field | Definition |
-| --- | --- |
-| `name` | Required trimmed string. |
-| `email` | Required, unique, lowercased, trimmed string. |
-| `password` | Required bcrypt hash. |
-| `createdAt`, `updatedAt` | Mongoose timestamps. |
+### 6.2 Authentication
 
-### `ChatSession` (actively used)
+```text
+Register: dialog → Zod validation → POST /api/auth/register → bcrypt hash → User document
+Login:    dialog → POST /api/auth/login → bcrypt compare → signed JWT → auth-token HTTP-only cookie
+Restore:  AuthProvider mount → GET /api/auth/me → verify JWT → retrieve public user profile
+Logout:   profile control → POST /api/auth/logout → expire auth-token → clear client auth state
+```
 
-| Field | Definition |
-| --- | --- |
-| `userId` | Required `ObjectId` reference to `User`. |
-| `title` | Required trimmed string, derived from first prompt or manually renamed. |
-| `createdAt`, `updatedAt` | Mongoose timestamps. |
+The JWT contains `userId` and `email`, expires in seven days, uses `sameSite: "lax"`, `httpOnly: true`, `path: "/"`, and is marked `secure` only when `NODE_ENV === "production"`.
 
-### `Message` (actively used)
+### 6.3 Session history
 
-| Field | Definition |
-| --- | --- |
-| `sessionId` | Required `ObjectId` reference to `ChatSession`. |
-| `role` | Required enum: `user` or `assistant`. |
-| `content` | Required trimmed string. |
-| `createdAt`, `updatedAt` | Mongoose timestamps. |
+```text
+Signed-in Sidebar mount → GET /api/sessions → sessions sorted by ChatSession.updatedAt descending
+Click a session             → GET /api/sessions/:id/messages → messages sorted createdAt ascending
+Rename                      → PATCH /api/sessions/:id with { title }
+Delete                      → DELETE /api/sessions/:id → delete Message documents, then ChatSession
+New Session                 → clear in-memory messages and activeSessionId; persistence begins with next prompt
+```
 
-### `VoiceSetting` (schema only; not connected to UI/API)
+`groupSessions` renders the sidebar sections **Today**, **Yesterday**, **Previous 7 Days**, and **Older**.
 
-Defines one document per user with `voiceURI`, `rate` (0.5–2), `pitch` (0–2), `volume` (0–1), `autoSpeak`, and timestamps. Current user preferences instead use the `voice-settings` browser localStorage key.
+### 6.4 Voice controls
 
-## 7. API Reference
+`useSpeechRecognition` creates `SpeechRecognition` or `webkitSpeechRecognition` where supported, uses continuous interim results, and feeds the transcript into the text input. `useSpeechSynthesis` retrieves browser voices and speaks completed replies using the selected settings. Preferences are stored under the `voice-settings` localStorage key and synchronized with other tabs through the storage event.
 
-| Route | Method | Authentication behavior | Current purpose |
+Voice preferences do **not** currently use the database, despite the presence of a `VoiceSetting` Mongoose model.
+
+## 7. AI Provider and Model Design
+
+### Provider selection
+
+`settings/ai.config.ts` reads `AI_PROVIDER`, normalizes it to lowercase, and supports `gemini` or `ollama`. The default when the variable is absent is `ollama`.
+
+| Provider | Client/module | Chat endpoint/call | Model source |
 | --- | --- | --- | --- |
-| `/api/auth/register` | POST | Public | Validate and create a bcrypt-hashed user. Returns `201`. |
-| `/api/auth/login` | POST | Public | Validate credentials, issue `auth-token` HTTP-only cookie, return profile. |
-| `/api/auth/logout` | POST | Cookie cleared | Expires the auth cookie. |
-| `/api/auth/me` | GET | Required | Verify cookie and return current user profile. |
-| `/api/chat` | POST | Optional | Generate a Gemini reply; authenticated use persists messages/session. |
-| `/api/sessions` | GET | Required | List current user’s sessions in descending `updatedAt` order. |
-| `/api/sessions/:sessionId/messages` | GET | Required and ownership checked | Load a selected session’s messages in ascending creation order. |
-| `/api/sessions/:sessionId` | PATCH | **No check currently** | Rename a session. |
-| `/api/sessions/:sessionId` | DELETE | **No check currently** | Delete a session and all its messages. |
-| `/api/models` | GET | Public | Lists Gemini models accessible to the configured server key. |
-| `/api/test` | POST | Public | Development helper that creates a hard-coded test user; must not ship. |
+| Ollama | `lib/ollama.ts` | `POST {OLLAMA_BASE_URL}/api/chat` with `stream: false` | `OLLAMA_MODEL`, default `gemma4:31b` |
+| Gemini | `lib/gemini.ts` | `GoogleGenAI.models.generateContent` | `GEMINI_MODEL`, default `models/gemini-3.8-flash` |
 
-### Key request/response shapes
+`lib/ai.ts` is the provider-neutral seam. `generateChatCompletion()` delegates generation and `listAvailableModels()` delegates model enumeration. API consumers call only that seam:
 
-```ts
-// POST /api/chat
-{ message: string; sessionId?: string }
+- `services/chat-processing.service.ts` uses `generateChatCompletion()`.
+- `GET /api/models` returns `{ models }` from the active provider.
 
-// 200 response
-{ reply: string; sessionId: string | null }
-```
+### Ollama request behavior
 
-```ts
-// Authenticated session list response
-Array<{ _id: string; title: string; createdAt: string; updatedAt: string }>
-```
+`lib/ollama.ts` accepts `user`, `assistant`, and `system` roles directly. It sends JSON, attaches `Authorization: Bearer <OLLAMA_API_KEY>` only when a key is configured, maps temperature to `options.temperature`, maps output-token limit to `options.num_predict`, and throws on non-2xx HTTP responses. It also lists active-endpoint models through `GET /api/tags`.
 
-### Authentication design
+The default base URL is `https://ollama.com`; a local Ollama server requires setting `OLLAMA_BASE_URL` to its reachable URL (for example, its local host/port). The code does not start, install, pull, or health-check an Ollama runtime.
 
-- Passwords are bcrypt-hashed with cost factor 10 before storage.
-- A JWT contains `userId` and `email`, expires after 7 days, and is set as `auth-token`.
-- Cookie flags: `httpOnly`, `sameSite: "lax"`, `path: "/"`, `secure` only in production, seven-day `maxAge`.
-- Login and registration errors distinguish invalid payload, duplicate user, and invalid credentials.
-- Client authentication state is restored by calling `/api/auth/me` once at provider mount.
+### Gemini request behavior
 
-## 8. Conversation Processing Design
+`lib/gemini.ts` converts `assistant` roles to Gemini's `model` role; every other role is sent as `user`. This means a future system prompt would not retain a distinct Gemini system role without additional adapter work. It passes temperature and `maxOutputTokens` to the Google GenAI SDK.
 
-For an authenticated first prompt, the processing service derives a title from the first 50 characters, creates a session, saves the user message, obtains the latest 20 messages, converts database roles to Gemini roles (`assistant` → `model`), requests a completion, saves the assistant reply, and returns the reply plus session ID.
+### Current effective configuration
 
-```mermaid
-sequenceDiagram
-  participant B as Browser
-  participant API as POST /api/chat
-  participant DB as MongoDB
-  participant G as Gemini
-  B->>API: message + optional sessionId
-  API->>DB: Read auth cookie / create session if needed
-  API->>DB: Save user message
-  API->>DB: Read latest 20 messages
-  API->>G: Send chronological conversation
-  G-->>API: Reply
-  API->>DB: Save assistant message
-  API-->>B: reply + sessionId
-```
+The audited local environment selects Ollama and configures the requested Ollama model as `gemma4:31b`, temperature `0.7`, and maximum output `2048`. These values are environment-specific; never commit credentials or copy their values into this document.
 
-Design rationale: MongoDB, not a provider-specific Gemini chat object, is the source of truth. This supports sidebar history, user-owned sessions, resume behavior, future retrieval augmentation, and provider flexibility. Limiting recent context to 20 messages is a simple, transparent performance/cost control, but it is message-count based—not token aware or summarized.
+## 8. Data Model
 
-## 9. Voice and Browser Behavior
+| Collection/model | Fields | Usage |
+| --- | --- | --- |
+| `User` | `name`, unique lowercased `email`, bcrypt `password`, timestamps | Registration, login, profile restoration. |
+| `ChatSession` | `userId` reference, trimmed `title`, timestamps | One persisted conversation container per signed-in chat. |
+| `Message` | `sessionId` reference, `role` (`user`/`assistant`), trimmed `content`, timestamps | Persisted message history. |
+| `VoiceSetting` | unique `userId`, `voiceURI`, `rate` 0.5–2, `pitch` 0–2, `volume` 0–1, `autoSpeak`, timestamps | Schema exists only; no route or UI currently reads/writes it. |
 
-- Speech recognition uses `SpeechRecognition` with `webkitSpeechRecognition` fallback, `continuous = false`, `interimResults = false`, and `en-IN` language.
-- Recognition support is browser-dependent. When unavailable, the microphone control does not show a dedicated unsupported-browser explanation.
-- Synthesis uses the browser’s installed voices and listens for `voiceschanged` before presenting choices.
-- Auto Speak is enabled by default. It cancels any prior utterance before reading the next response.
-- The header surfaces **Ready**, **Listening**, **Thinking**, and **Speaking** state. The Interrupt action cancels current synthesis.
-- Voice preferences persist locally, survive refreshes, and synchronize across tabs through `storage` plus a same-tab custom event.
+There are Mongoose references but no defined cascade behavior or database indexes beyond the unique `User.email` and `VoiceSetting.userId` schema declarations. Delete is implemented manually by deleting messages before a chat session.
 
-## 10. Environment, Local Development, and Quality Checks
+## 9. API Contract
+
+| Method and route | Auth | Request | Response / purpose |
+| --- | --- | --- | --- |
+| `POST /api/auth/register` | Public | `{ name, email, password }` | Creates hashed user; returns success/profile result. |
+| `POST /api/auth/login` | Public | `{ email, password }` | Validates credentials, sets cookie, returns profile result. |
+| `POST /api/auth/logout` | Cookie cleared | None | Expires `auth-token`. |
+| `GET /api/auth/me` | Required | None | Returns current user profile or 401. |
+| `POST /api/chat` | Optional | `{ message, sessionId?: string }` | `{ reply, sessionId }`; saves content when a session is in use. |
+| `GET /api/sessions` | Required | None | Current user's sessions, newest first. |
+| `GET /api/sessions/:sessionId/messages` | Required + ownership checked | None | Session messages, oldest first. |
+| `PATCH /api/sessions/:sessionId` | **Missing check** | `{ title }` | Renames a session. |
+| `DELETE /api/sessions/:sessionId` | **Missing check** | None | Deletes a session and its messages. |
+| `GET /api/models` | Public | None | `{ models }` from selected provider. |
+| `POST /api/test` | Public | None | Creates a hard-coded test user; development-only endpoint. |
+
+The app currently has no API version prefix, shared error-envelope type, request rate limiting, or streaming response contract.
+
+## 10. Configuration and Local Setup
 
 ### Required environment variables
 
-Create `.env.local` with the following names; do not commit secret values.
+Create a private `.env.local` file. It is correctly ignored by Git; use a secret manager or deployment environment variables in hosted environments.
 
-| Variable | Required | Used by |
-| --- | --- | --- |
-| `MONGODB_URI` | Yes for DB-driven paths | MongoDB connection module. |
-| `JWT_SECRET` | Yes for auth module | JWT signing and verification. |
-| `GEMINI_API_KEY` | Yes for AI paths | Google GenAI client. |
-| `NEXT_PUBLIC_API_URL` | Present but unused in code | Reserved configuration; requests currently use same-origin routes. |
+```env
+# Database and auth
+MONGODB_URI=<MongoDB connection string>
+JWT_SECRET=<long random signing secret>
+
+# Select one provider
+AI_PROVIDER=ollama                 # or gemini
+
+# Ollama (required when AI_PROVIDER=ollama)
+OLLAMA_BASE_URL=<Ollama server URL>
+OLLAMA_API_KEY=<optional provider/server token>
+OLLAMA_MODEL=gemma4:31b
+OLLAMA_TEMPERATURE=0.7
+OLLAMA_MAX_OUTPUT_TOKENS=2048
+
+# Gemini (required when AI_PROVIDER=gemini)
+GEMINI_API_KEY=<Google AI API key>
+GEMINI_MODEL=models/gemini-3.8-flash
+```
+
+`NEXT_PUBLIC_API_URL` may exist in local configuration but is not read by the current code. The existing README uses an obsolete `NEXTAUTH_SECRET` example; this project uses `JWT_SECRET`, not NextAuth.
 
 ### Commands
 
 ```bash
-npm run dev      # development server
-npm run lint     # ESLint
-npm run build    # optimized production build
-npm run start    # serve a completed build
-npx tsc --noEmit # standalone type check
+npm install
+npm run dev       # local development server
+npm run lint      # ESLint (currently fails; see Section 13)
+npm run build     # optimized build (passes at audited revision)
+npm start         # serve a production build
 ```
 
-### Verified audit result
+## 11. Changes in the Latest Ollama Integration
 
-| Check | Result | Details |
-| --- | --- | --- |
-| `npm.cmd run build` | Passed | Optimized Next.js 16.2.10 build completed on 4 Aug 2026; route manifest generated successfully. |
-| `npm.cmd run lint` | Failed | 6 errors and 18 warnings. Main errors: five explicit `any` uses plus a React state-in-effect rule in `SessionItem`. |
-| Automated tests | Not available | No repository test/spec files found. |
-| TypeScript during build | Passed | Next.js build’s type-check phase completed. |
+Latest commit: `bf0012d ollama-api-used`.
 
-Note: In the current Windows PowerShell environment, `npm` is blocked by execution policy; use `npm.cmd` or adjust local shell policy. This is an environment issue, not a project source-code issue.
+| File | Change |
+| --- | --- |
+| `lib/ai.ts` | **New.** Introduced provider-neutral request types plus generation/model-list dispatch. |
+| `lib/ollama.ts` | **New.** Added Ollama URL/key handling, `/api/chat` generation, `/api/tags` model listing, JSON/error handling, and non-streaming options. |
+| `settings/ai.config.ts` | Switched from Gemini-only constants to environment-driven provider/model configuration; default provider is Ollama. |
+| `lib/gemini.ts` | Converted from a directly exported client usage pattern into compatible generation/model-list helper functions; retained the `ai` export. |
+| `services/chat-processing.service.ts` | Replaced direct Gemini generation with `generateChatCompletion()` and now passes model, temperature, and output-token configuration. |
+| `app/api/models/route.ts` | Replaced direct Gemini listing with active-provider listing and wraps output as `{ models }`. |
+| `README.md` | Modified in the commit, but its visible feature/architecture sections still describe a Gemini-only implementation and need alignment. |
 
-## 11. Delivery History and Engineering Progression
+No dependency changes appear in the latest commit. The integration uses the platform `fetch` API for Ollama rather than adding an Ollama SDK.
 
-The git history shows a clear incremental implementation path:
+## 12. Known Issues, Risks, and Recommended Next Work
 
-1. UI foundation, forms, and authentication flows (24–26 July 2026).
-2. MongoDB-backed chat session creation, message persistence, conversation retrieval, and 20-message context window (27 July).
-3. Session listing, chat loading, context/provider state, login-only history, new chat, deletion, rename, and recency grouping (28 July).
-4. Responsiveness, UI refinements, attempted production fixes, and a final guest-chat troubleshooting commit (29 July).
+Address the first four items before calling the application production-ready.
 
-The active branch is `main`; its latest reviewed commit is `926dda6` (`testing/guest-User-chat-is-not-working`). The commit message accurately signals an unresolved guest-chat defect.
-
-## 12. Current Risks, Gaps, and Release Priorities
-
-This section is intentionally candid. It is the safest basis for a future handoff, interview discussion, or Version 1.0 release plan.
-
-| Priority | Finding | Impact | Recommended resolution |
+| Priority | Finding | Impact | Recommended fix |
 | --- | --- | --- | --- |
-| R1 — Critical functionality | `processChat` computes a fallback `contents` payload for a guest but calls Gemini with `geminiConversationHistory` instead. Guest history is empty, so guest prompts are sent as an empty conversation. | Guest chat is expected to fail despite guest UI being exposed. | Pass `contents` to `generateContent`; add guest-chat integration test. |
-| R2 — Critical security | PATCH and DELETE session routes neither call `getAuthenticatedUser` nor constrain the database operation by `userId`. `processChat` also accepts a supplied session ID without checking ownership. | An attacker who knows/guesses an ID could modify/delete another user’s session or write into it. | Require auth in every session mutation and filter by `_id` plus authenticated `userId`; validate chat session ownership before saving. |
-| R3 — High security | `POST /api/test` is public and creates a predictable test user with an unhashed password. `/api/models` publicly exposes provider model listing. | Debug surface and potentially unsafe test data can be reached in production. | Remove test route; restrict/remove models route for production. |
-| R4 — High release quality | `npm run lint` has 6 errors and 18 warnings. | CI cannot treat lint as a passing quality gate. | Replace `any` with typed errors/unknown guards, refactor SessionItem derived state, then clean warnings. |
-| R5 — High release confidence | No automated tests, CI workflow, deployment configuration, monitoring, or health check evidence. | Regressions and provider/database failures are difficult to detect. | Add unit/API/e2e tests, CI, release checklist, error tracking, and production smoke test. |
-| R6 — High input controls | Chat body only checks truthiness; there is no Zod schema, type, length, or rate-limit policy for prompts/renames. | Oversized/malformed inputs, cost abuse, and uneven errors. | Validate DTOs server-side, cap prompt/title sizes, add per-user/IP rate limiting. |
-| R7 — Medium data behavior | Adding messages does not update `ChatSession.updatedAt`; sessions may not reorder after a continued conversation. | Sidebar recency grouping/order can become stale. | Touch session `updatedAt` when each message exchange completes. |
-| R8 — Medium reliability | `/api/auth/me` calls `getUserById` without first calling `connectDB`. | Cold process/database state could produce buffered query delay/error. | Connect explicitly in the route or guarantee it in service boundary. |
-| R9 — Medium UX parity | Markdown rendering, syntax highlighting, real typing animation, streaming, mobile session close-on-select, and user-facing session-operation errors are absent/incomplete. | Roadmap descriptions overstate current experience. | Prioritize after R1–R6, based on product needs. |
-| R10 — Low consistency | Client and server registration schemas differ (client name minimum 3 vs server 2; password max 32 vs server 100). `AI_CONFIG` temperature/output values are declared but not applied. | Duplicated rules can drift; configuration can mislead maintainers. | Share validation schema where practical and pass generation config intentionally. |
+| Critical | Session `PATCH` and `DELETE` do not authenticate or constrain queries by `userId`. | Someone knowing a session ID could rename or delete another user's chat. | Call `getAuthenticatedUser()` and use `{ _id: sessionId, userId }` in both operations. |
+| Critical | `processChat` accepts any supplied `sessionId` without verifying ownership. | A caller can append messages to another user's session; guest callers can also supply an ID. | Require a signed-in owner for existing sessions and query by `_id` plus authenticated `userId` before saving. |
+| High | Persisted message workflow sends the newest user message twice to the AI provider. | Duplicated prompt content can degrade response quality and add token cost. | Load history before saving the current message, or omit the explicit appended message when history already includes it. |
+| High | No automated tests, CI, rate limiting, or API abuse controls. | Regressions and public AI endpoint cost/availability risks are unchecked. | Add unit/integration tests, GitHub Actions, per-user/IP limits, input limits, and provider failure tests. |
+| High | `POST /api/test` is public and creates a known test account with a plaintext password field. | Unwanted database writes and unsafe endpoint exposure. | Remove it or restrict it to a non-production development environment. |
+| Medium | `ChatSession.updatedAt` is not updated when child `Message` documents are created. | Sidebar sorting/grouping reflects session creation or rename, not most recent conversation activity. | Touch the session after each successful message pair or maintain `lastMessageAt`. |
+| Medium | The chat route opens MongoDB even for non-persistent guest messages. | Guest AI availability unnecessarily depends on MongoDB. | Connect only when authentication/session persistence is required. |
+| Medium | `AI_CONFIG.PROVIDER` uses a type assertion without runtime validation. | Invalid `AI_PROVIDER` fails only when a request reaches the provider adapter. | Validate configuration at startup with Zod or an explicit allowlist and a clear error. |
+| Medium | Gemini system messages are mapped to `user`; Ollama accepts system roles. | Cross-provider behavior is not fully semantically equivalent. | Define a provider-neutral system-instruction contract and map it intentionally per SDK. |
+| Medium | README and the prior project summary are Gemini-only/stale. | Onboarding can configure the wrong provider or secret name. | Keep README synchronized with this file and add a committed `.env.example` containing placeholders only. |
+| Low | Voice settings persist only by browser/localStorage. | Preferences do not roam with an authenticated user. | Add authenticated `VoiceSetting` read/write APIs if cross-device settings are desired. |
+| Low | Assistant output is plain text, not Markdown, and generation is non-streaming. | Rich formatting and perceived responsiveness are limited. | Add a safe Markdown renderer and provider streaming protocol when needed. |
 
-## 13. Recommended Version 1.0 Release Plan
+### Secret-handling note
 
-1. **Protect data first:** remove the test endpoint; enforce authentication and ownership for every read/mutation/chat session reference; add server-side request schemas and prompt limits.
-2. **Restore basic functionality:** fix guest prompt `contents`; explicitly decide whether guests are supported and communicate any non-persistence behavior.
-3. **Pass quality gates:** eliminate lint errors/warnings; add at least authentication, ownership, guest-chat, session CRUD, and message-context tests; run them in CI.
-4. **Harden operations:** error tracking, structured logs without secrets, rate limiting, Gemini failure handling, MongoDB indexes, and a deployment/runbook.
-5. **Polish product claims:** either add markdown/streaming/typing features or remove them from Version 1.0 claims. Update README with actual setup, features, API, browser support, and known limitations.
+This audit intentionally excludes credential values. If any real database URL, JWT secret, Gemini key, or Ollama token has ever been committed, pasted into tickets/chat, or otherwise exposed, rotate it immediately and invalidate/redeploy the affected environment. Keep `.env.local` private and commit only a placeholder-based `.env.example`.
 
-## 14. Resume-Ready Description
+## 13. Verification and Quality Status
 
-Use this after the R1–R6 blockers are addressed, or qualify it as a portfolio prototype until then.
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Production build | Pass | `npm run build` completed successfully with Next.js 16.2.10. It generated static `/` and `/assistant` routes and dynamic API routes. |
+| TypeScript during build | Pass | Next.js completed its build-time TypeScript phase. |
+| ESLint | Fail | `npm run lint` reported **9 errors** and **17 warnings**. |
+| Automated tests | Not present | No test/spec files or test script were found. |
+| CI | Not present | No repository workflow configuration was found. |
+| Live provider/database smoke test | Not performed | It would call external services and mutate or consume scoped resources; configuration review and build verification were performed instead. |
 
-> Built a full-stack AI Voice Assistant using Next.js, React, TypeScript, MongoDB, Mongoose, JWT authentication, and Google Gemini. Implemented user authentication, persistent multi-session chat history, 20-message conversational context, responsive session management, and browser-native speech recognition/synthesis with locally persisted voice preferences.
+Lint errors are in `app/api/chat/route.ts`, `app/api/models/route.ts`, `app/api/sessions/route.ts`, `app/api/sessions/[sessionId]/messages/route.ts`, `components/sidebar/SessionItem.tsx`, `lib/gemini.ts`, and `services/chat-processing.service.ts`. Most are explicit `any` violations; `SessionItem` also synchronously sets state in an effect. Warnings include unused variables/imports and an incomplete React Hook dependency list.
 
-Possible concise bullets:
+## 14. Ownership Map for Future Contributors
 
-- Built a Next.js App Router application integrating Gemini with MongoDB-backed multi-session conversational memory.
-- Designed JWT authentication with bcrypt password hashing and HTTP-only cookies, plus validated registration/login flows using Zod and React Hook Form.
-- Implemented responsive chat UX with session grouping, load/rename/delete interactions, loading/status feedback, and browser Web Speech APIs.
-- Structured the codebase into route handlers, service layer, data models, context providers, typed contracts, and reusable UI primitives.
+| Need to change | Start here | Follow through |
+| --- | --- | --- |
+| Add/change AI provider | `lib/ai.ts`, `settings/ai.config.ts` | Implement adapter, model list, environment docs, tests. |
+| Change Ollama behavior | `lib/ollama.ts` | Validate endpoint/auth/model semantics and update `.env.example`/README. |
+| Change prompt/history rules | `services/chat-processing.service.ts` | Preserve role conversion, persistence order, ownership checks, and test both providers. |
+| Add a chat UI feature | `components/layout/MainContent.tsx`, `context/ChatContext.tsx` | Add service/API/type updates only as necessary. |
+| Add a session operation | `app/api/sessions/**`, `services/session*.ts` | Authenticate and scope every database operation to the session owner. |
+| Change auth | `lib/auth.ts`, `services/auth.service.ts`, `app/api/auth/**`, `context/AuthContext.tsx` | Consider cookie flags, token lifetime, validation, and profile restoration. |
+| Change voice settings | `context/VoiceSettingsContext.tsx`, `hooks/useSpeech*.ts`, `components/voice/**` | Account for unsupported browsers and localStorage synchronization. |
+| Change schemas | `models/**`, `schemas/**`, `types/**` | Plan migration/index implications and update all route validation. |
 
-Do not claim deployed production operation, streaming output, markdown rendering, or fully secure session isolation until those capabilities are actually implemented and verified.
+## 15. Handoff Checklist
 
-## 15. Interview Preparation
-
-### 30-second explanation
-
-“Voice Assistant is a full-stack Next.js application that lets users converse with Gemini using text or browser speech. I used MongoDB as the source of truth for users, sessions, and messages; that allowed persistent chat history and a sidebar for resuming conversations. On each authenticated request I supply the latest 20 messages to Gemini in chronological order, balancing conversational continuity against cost and context growth. The frontend uses React Context for auth, chat, and voice settings, with browser-native speech synthesis and recognition.”
-
-### Key design decisions to explain
-
-| Topic | Strong answer |
-| --- | --- |
-| Why MongoDB rather than Gemini chat state? | It provides application-owned durable history, sidebar/session features, future provider flexibility, auditability, and a foundation for RAG. |
-| Why limit to 20 messages? | It is a simple first context window policy that bounds prompt size, latency, and cost. Its limitation is that messages have unequal token sizes; a next iteration would be token-aware and summarize older history. |
-| Why HTTP-only cookie for JWT? | It avoids exposing the token to JavaScript/localStorage and lets the server authenticate API requests through cookies. It still requires CSRF and authorization design appropriate to the deployment. |
-| How is voice implemented? | The app relies on browser Web Speech APIs, loads installed voices dynamically, and keeps settings client-local because voice availability varies per device/browser. |
-| How is the code maintainable? | Routes focus on HTTP handling, services centralize business flows, models define persistence, schemas validate auth inputs, and contexts isolate client state domains. |
-
-### Likely follow-up questions and honest answers
-
-| Interview question | Suggested answer |
-| --- | --- |
-| What security issue would you fix first? | Session ownership checks. Every session read/write/delete must filter by authenticated `userId`; currently mutation routes need this hardening. I would add negative authorization tests before release. |
-| How would you scale conversation memory? | Use token-based selection, summarize older exchanges into a stored summary, and retrieve relevant long-term facts/documents via embeddings while keeping the recent conversational tail. |
-| How would you stream responses? | Use Gemini streaming on the server, expose a `ReadableStream`/SSE-style response, append text incrementally in the client, and handle cancellation/error/final persistence. |
-| How would you test it? | Unit-test schemas and grouping; integration-test auth and ownership routes against an isolated MongoDB; e2e-test register/login/chat/session flows; mock Gemini and browser speech APIs. |
-| What are Web Speech API limitations? | Recognition/synthesis support and installed voices vary across browsers and operating systems. A production version should detect capability and provide text-only fallback plus clear status messaging. |
-
-## 16. Future Technical Roadmap
-
-### Near-term hardening
-
-- Fix guest chat and secure all session operations.
-- Add shared DTO validation, rate limiting, request logging, tests, CI, and deployment documentation.
-- Remove debug API routes and align schema/config duplication.
-
-### Product improvements
-
-- Markdown/code rendering and optional syntax highlighting.
-- Streaming text with real incremental rendering and cancel support.
-- Better empty/error/loading states, search/pin/archive chats, and mobile sidebar behavior.
-- Persist voice settings for authenticated users while retaining device-specific voice fallback.
-
-### AI platform evolution
-
-- Token-aware memory, summaries, and user preference memory.
-- Document upload, chunking, embeddings, retrieval-augmented generation, and citations.
-- Carefully scoped tool/function calling for weather, search, calendars, email, or other integrations.
-- Observability, feedback loops, evaluation datasets, and cost controls.
-
-## 17. Maintenance Checklist
-
-Update this document whenever any of the following change:
-
-- route/API contracts, environment variable names, authentication design, data schemas, model/provider configuration;
-- browser voice support or storage location;
-- security controls and known risks;
-- build/lint/test/deployment status;
-- roadmap scope or claims used in resumes/portfolio material.
-
-For a release, record the commit SHA, deployed URL, runtime versions, verified environment configuration (without values), test results, migration/index changes, rollback steps, and the owner/date of approval.
+1. Read this document, `README.md`, and `AGENTS.md` before changing framework code.
+2. Configure a private `.env.local` using the variables in Section 10; do not share secrets in source control.
+3. Decide the intended deployment model: hosted Ollama endpoint versus local/runtime-managed Ollama, or Gemini fallback.
+4. Fix session authorization and duplicate-prompt behavior before opening the app to real users.
+5. Add test coverage around registration/login, authorization boundaries, guest/persisted chat, provider selection, and Ollama error handling.
+6. Make lint clean, establish CI, then update this document whenever the architecture, provider contract, model defaults, or environment variables change.

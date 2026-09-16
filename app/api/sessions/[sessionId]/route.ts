@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { connectDB } from "@/lib/mongodb";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { ChatSession } from "@/models/ChatSession";
 import { Message } from "@/models/Message";
 
@@ -15,14 +16,26 @@ export async function DELETE(
   try {
     await connectDB();
 
+    const user = await getAuthenticatedUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
     const { sessionId } = await params;
 
-    await Message.deleteMany({
-      sessionId,
-    });
-
     const deletedSession =
-      await ChatSession.findByIdAndDelete(sessionId);
+      await ChatSession.findOneAndDelete({
+        _id: sessionId,
+        userId: user.userId,
+      });
 
     if (!deletedSession) {
       return NextResponse.json(
@@ -34,6 +47,10 @@ export async function DELETE(
         }
       );
     }
+
+    await Message.deleteMany({
+      sessionId,
+    });
 
     return NextResponse.json({
       message: "Session deleted successfully.",
@@ -64,6 +81,19 @@ export async function PATCH(
   try {
     await connectDB();
 
+    const user = await getAuthenticatedUser();
+
+    if(!user) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
     const { sessionId } = await params;
 
     const { title } = await request.json();
@@ -79,8 +109,11 @@ export async function PATCH(
       );
     }
 
-    const updatedSession = await ChatSession.findByIdAndUpdate(
-      sessionId,
+    const updatedSession = await ChatSession.findOneAndUpdate(
+      {
+        _id: sessionId,
+        userId: user.userId,
+      },
       {
         title: title.trim(),
       },
