@@ -21,7 +21,7 @@ The optimized production build passes at the audited revision. `npm run lint` do
 | Conversation context | For persisted chats, the latest 20 stored messages are loaded in chronological order and sent with the new prompt. |
 | Guest use | A user can use the chat UI without signing in. Guest messages are not stored, and no session ID is returned. MongoDB is nevertheless required because the chat route connects before processing. |
 | Accounts | Registration, login, logout, and session restoration use bcrypt password hashes and a JWT in an HTTP-only cookie. |
-| Chat history | Signed-in users get persisted sessions, session selection, message loading, rename, delete, and recency grouping. |
+| Chat history | Signed-in users get persisted sessions, session selection, message loading, rename, delete, and recency grouping. Session rename/delete and existing-chat processing are scoped to the authenticated owner. |
 | Voice input | Browser Web Speech recognition fills the chat input; configured language is `en-IN`. Browser support is required. |
 | Voice output | Browser speech synthesis can auto-read answers. The user can choose a voice and adjust rate, pitch, volume, auto-speak, preview, and reset. |
 | Responsive UX | A desktop sidebar becomes a slide-in sidebar on smaller screens. `/` and `/assistant` show the same application shell. |
@@ -156,12 +156,13 @@ RootLayout
 2. services/chat.service.ts POSTs { message, sessionId? } to /api/chat.
 3. app/api/chat/route.ts opens/reuses the MongoDB connection and invokes processChat.
 4. processChat reads the JWT cookie, if present.
-5. For a signed-in user without a session, it creates ChatSession using the first prompt as title.
-6. For a persisted session, it saves the user message and fetches up to 20 newest messages, ordered oldest → newest.
-7. It builds provider-neutral messages, chooses AI_CONFIG.MODEL, and calls lib/ai.ts.
-8. lib/ai.ts routes to lib/ollama.ts or lib/gemini.ts.
-9. The completed reply is saved for persisted sessions and returned with sessionId.
-10. The UI appends the assistant reply, refreshes the sidebar for a newly created session, and calls speech synthesis when auto-speak is enabled.
+5. If a sessionId is supplied, processChat requires an authenticated user and verifies that {_id: sessionId, userId: authenticatedUserId} exists before any message is written.
+6. For a signed-in user without a session, it creates ChatSession using the first prompt as title.
+7. For a persisted session, it saves the user message and fetches up to 20 newest messages, ordered oldest → newest.
+8. It builds provider-neutral messages, chooses AI_CONFIG.MODEL, and calls lib/ai.ts.
+9. lib/ai.ts routes to lib/ollama.ts or lib/gemini.ts.
+10. The completed reply is saved for persisted sessions and returned with sessionId.
+11. The UI appends the assistant reply, refreshes the sidebar for a newly created session, and calls speech synthesis when auto-speak is enabled.
 ```
 
 **Important implementation note:** the user message is stored before history is loaded and is then appended again to the outbound message list. For persisted chats, the newest prompt is therefore sent to the model twice. This is a known defect, not intended context behavior.
@@ -182,8 +183,9 @@ The JWT contains `userId` and `email`, expires in seven days, uses `sameSite: "l
 ```text
 Signed-in Sidebar mount → GET /api/sessions → sessions sorted by ChatSession.updatedAt descending
 Click a session             → GET /api/sessions/:id/messages → messages sorted createdAt ascending
-Rename                      → PATCH /api/sessions/:id with { title }
-Delete                      → DELETE /api/sessions/:id → delete Message documents, then ChatSession
+Rename                      → PATCH /api/sessions/:id with { title } → requires authenticated owner
+Delete                      → DELETE /api/sessions/:id → requires authenticated owner, then delete messages
+Existing chat message       → POST /api/chat with sessionId → requires authenticated owner before message persistence
 New Session                 → clear in-memory messages and activeSessionId; persistence begins with next prompt
 ```
 
@@ -234,7 +236,7 @@ The audited local environment selects Ollama and configures the requested Ollama
 | `Message` | `sessionId` reference, `role` (`user`/`assistant`), trimmed `content`, timestamps | Persisted message history. |
 | `VoiceSetting` | unique `userId`, `voiceURI`, `rate` 0.5–2, `pitch` 0–2, `volume` 0–1, `autoSpeak`, timestamps | Schema exists only; no route or UI currently reads/writes it. |
 
-There are Mongoose references but no defined cascade behavior or database indexes beyond the unique `User.email` and `VoiceSetting.userId` schema declarations. Delete is implemented manually by deleting messages before a chat session.
+There are Mongoose references but no defined cascade behavior or database indexes beyond the unique `User.email` and `VoiceSetting.userId` schema declarations. Delete is implemented manually by deleting messages after the owned chat session is deleted.
 
 ## 9. API Contract
 
@@ -244,11 +246,11 @@ There are Mongoose references but no defined cascade behavior or database indexe
 | `POST /api/auth/login` | Public | `{ email, password }` | Validates credentials, sets cookie, returns profile result. |
 | `POST /api/auth/logout` | Cookie cleared | None | Expires `auth-token`. |
 | `GET /api/auth/me` | Required | None | Returns current user profile or 401. |
-| `POST /api/chat` | Optional | `{ message, sessionId?: string }` | `{ reply, sessionId }`; saves content when a session is in use. |
+| `POST /api/chat` | Optional | `{ message, sessionId?: string }` | `{ reply, sessionId }`; guest chats may omit `sessionId`, while a supplied session ID requires an authenticated owner. |
 | `GET /api/sessions` | Required | None | Current user's sessions, newest first. |
 | `GET /api/sessions/:sessionId/messages` | Required + ownership checked | None | Session messages, oldest first. |
-| `PATCH /api/sessions/:sessionId` | **Missing check** | `{ title }` | Renames a session. |
-| `DELETE /api/sessions/:sessionId` | **Missing check** | None | Deletes a session and its messages. |
+| `PATCH /api/sessions/:sessionId` | **Required + ownership checked** | `{ title }` | Renames the authenticated user's session; another user's/nonexistent session returns 404. |
+| `DELETE /api/sessions/:sessionId` | **Required + ownership checked** | None | Deletes the authenticated user's session and then its messages; another user's/nonexistent session returns 404. |
 | `GET /api/models` | Public | None | `{ models }` from selected provider. |
 | `POST /api/test` | Public | None | Creates a hard-coded test user; development-only endpoint. |
 
@@ -310,12 +312,12 @@ No dependency changes appear in the latest commit. The integration uses the plat
 
 ## 12. Known Issues, Risks, and Recommended Next Work
 
-Address the first four items before calling the application production-ready.
+The two session-authorization findings identified earlier have been fixed. The remaining items below are ordered by implementation priority for production hardening.
 
 | Priority | Finding | Impact | Recommended fix |
 | --- | --- | --- | --- |
-| Critical | Session `PATCH` and `DELETE` do not authenticate or constrain queries by `userId`. | Someone knowing a session ID could rename or delete another user's chat. | Call `getAuthenticatedUser()` and use `{ _id: sessionId, userId }` in both operations. |
-| Critical | `processChat` accepts any supplied `sessionId` without verifying ownership. | A caller can append messages to another user's session; guest callers can also supply an ID. | Require a signed-in owner for existing sessions and query by `_id` plus authenticated `userId` before saving. |
+| Resolved | Session `PATCH` and `DELETE` now authenticate and constrain queries by `userId`. | Prevents unauthorized rename/delete of another user's chat through a known session ID. | Keep ownership-scoped queries and authentication in place for all future session mutations. |
+| Resolved | `processChat` now requires an authenticated owner for a supplied `sessionId` and verifies `{ _id: sessionId, userId }` before saving. | Prevents appending messages to another user's session and blocks guest callers from supplying arbitrary persisted session IDs. | Keep this ownership check before message persistence. |
 | High | Persisted message workflow sends the newest user message twice to the AI provider. | Duplicated prompt content can degrade response quality and add token cost. | Load history before saving the current message, or omit the explicit appended message when history already includes it. |
 | High | No automated tests, CI, rate limiting, or API abuse controls. | Regressions and public AI endpoint cost/availability risks are unchecked. | Add unit/integration tests, GitHub Actions, per-user/IP limits, input limits, and provider failure tests. |
 | High | `POST /api/test` is public and creates a known test account with a plaintext password field. | Unwanted database writes and unsafe endpoint exposure. | Remove it or restrict it to a non-production development environment. |
@@ -362,6 +364,6 @@ Lint errors are in `app/api/chat/route.ts`, `app/api/models/route.ts`, `app/api/
 1. Read this document, `README.md`, and `AGENTS.md` before changing framework code.
 2. Configure a private `.env.local` using the variables in Section 10; do not share secrets in source control.
 3. Decide the intended deployment model: hosted Ollama endpoint versus local/runtime-managed Ollama, or Gemini fallback.
-4. Fix session authorization and duplicate-prompt behavior before opening the app to real users.
+4. Session mutation and chat-session ownership authorization are now fixed; next address duplicate-prompt behavior before opening the app to real users.
 5. Add test coverage around registration/login, authorization boundaries, guest/persisted chat, provider selection, and Ollama error handling.
 6. Make lint clean, establish CI, then update this document whenever the architecture, provider contract, model defaults, or environment variables change.
