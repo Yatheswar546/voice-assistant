@@ -655,14 +655,14 @@ PHASE 1: RAG INGESTION
 Document ✅
 DocumentChunk ✅
 
-02: Upload API 
+02: Upload API ✅
 UI also need to be done ✅
-multipart/form-data
-file size validation
-MIME/type validation
-authenticated-user ownership
+multipart/form-data ✅
+authenticated-user ownership ✅
 
 03: File Validation
+file size validation
+MIME/type validation
 allowed extensions
 MIME validation
 size limits

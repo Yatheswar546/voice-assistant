@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { Document } from "@/models/Document";
+import { validateUploadedFile } from "@/lib/rag/file-validator";
+import { success } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,6 +33,20 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           message: "File is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const validation = validateUploadedFile(file);
+
+    if(!validation.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: validation.message,
         },
         {
           status: 400,
