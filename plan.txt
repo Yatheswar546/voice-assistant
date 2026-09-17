@@ -688,11 +688,14 @@ unnecessary characters ✅
 empty content ✅
 preserving useful structure ✅
 
-07: Chunking
+07: Chunking 
 chunk size
 overlap
 metadata
 page/sheet information where available
+We have used character-based fixed-size chunking with overlap at 1st Stage.
+
+
 
 08: Embeddings
 embedding model
