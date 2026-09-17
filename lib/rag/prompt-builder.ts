@@ -1,3 +1,5 @@
+import { buildRagContext } from "./context-builder";
+
 interface RetrievedChunk {
     content: string;
     chunkIndex: number;
@@ -19,23 +21,7 @@ export function buildRagPrompt({
         throw new Error("Question cannot be empty.");
     }
 
-    const documentContext = chunks
-        .map((chunk, index) => {
-            const documentName =
-                typeof chunk.metadata?.originalName === "string"
-                    ? chunk.metadata.originalName
-                    : "Unknown Document";
-
-            return `
-[Retrieved Document ${index + 1}]
-Document: ${documentName}
-Chunk Index: ${chunk.chunkIndex}
-Similarity Score: ${chunk.score?.toFixed(4) ?? "N/A"}
-
-${chunk.content}
-`;
-        })
-        .join("\n");
+    const documentContext = buildRagContext(chunks);
 
     return `
 You are a helpful AI assistant.
@@ -53,7 +39,7 @@ by the retrieved context.
 RETRIEVED DOCUMENT CONTEXT
 ==========================
 
-${documentContext || "No relevant document context was found."}
+${documentContext}
 
 USER QUESTION
 =============
