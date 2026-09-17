@@ -4,8 +4,8 @@ import { connectDB } from "@/lib/mongodb";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { Document } from "@/models/Document";
 import { validateUploadedFile } from "@/lib/rag/file-validator";
-import { success } from "zod";
 import { uploadFileToGridFS } from "@/lib/rag/gridfs";
+import { ingestDocument } from "@/lib/rag/ingestion-service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       originalName: file.name,
       mimeType: file.type,
       size: file.size,
-      status: "uploaded",
+      status: "completed",
     });
 
     try {
@@ -81,10 +81,12 @@ export async function POST(req: NextRequest) {
       throw(error);
     }
 
+    await ingestDocument(document._id.toString());
+
     return NextResponse.json(
       {
         success: true,
-        message: "File uploaded successfully.",
+        message: "File uploaded and processed successfully.",
         document: {
           id: document._id,
           originalName: document.originalName,

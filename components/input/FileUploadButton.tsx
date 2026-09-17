@@ -14,7 +14,7 @@ export default function FileUploadButton({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (
+  const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
@@ -23,7 +23,32 @@ export default function FileUploadButton({
       return;
     }
 
-    console.log("Selected file:", file);
+    try {
+      console.log("Selected file:", file);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/documents/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      console.log("Upload response:", data);
+
+      if (!response.ok) {
+        console.error("Upload failed:", data);
+        return;
+      }
+
+      console.log("File uploaded successfully:", data);
+    } catch (error) {
+      console.error("File upload error:", error);
+    } finally {
+      event.target.value = "";
+    }
   };
 
   return (
