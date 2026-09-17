@@ -2,6 +2,14 @@ import { connectDB } from "@/lib/mongodb";
 import { generateEmbedding } from "./embedding";
 import { searchSimilarChunks } from "@/lib/rag/vector-store";
 
+export interface RetrievedChunk {
+    content: string;
+    chunkIndex: number;
+    documentId: unknown;
+    metadata?: Record<string, unknown>;
+    score?: number;
+}
+
 interface RetrieveOptions {
     query: string;
     userId: string;
@@ -14,7 +22,7 @@ export async function retrieveRelevantChunks({
     userId,
     limit = 5,
     documentId,
-}: RetrieveOptions) {
+}: RetrieveOptions): Promise<RetrievedChunk[]> {
     if (!query.trim()) {
         throw new Error("Query cannot be empty.");
     }
@@ -30,5 +38,5 @@ export async function retrieveRelevantChunks({
         documentId,
     });
 
-    return results;
+    return results as RetrievedChunk[];
 }

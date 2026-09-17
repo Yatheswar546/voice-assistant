@@ -1,12 +1,5 @@
 import { buildRagContext } from "./context-builder";
-
-interface RetrievedChunk {
-    content: string;
-    chunkIndex: number;
-    documentId: unknown;
-    metadata?: Record<string, unknown>;
-    score?: number;
-}
+import type { RetrievedChunk } from "./retriever";
 
 interface BuildRagPromptOptions {
     question: string;

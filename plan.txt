@@ -1071,3 +1071,69 @@ Prompt:
 Thank you for the detailed plan
 
 So, help me in this phase. Also, if we need to import any external libraries and use any tools from other websites then tell me clearly how to use them.  While coding part, tell me which file to change and which part of the file need to be changed exactly, everytime when we need to do changes in code.  And explain me the topics but no need of in-depth each topic to kill the time.  Got it, any more questions. The planning is all done previously if you refer to our previous chats. Now, let's start the work  
+
+=================================
+
+Yes, **your idea is good and it keeps the current architecture clean.** 👍
+
+### Your proposed workflow
+
+```text
+Guest User
+ ├── Text Input ✅
+ ├── Voice Input ✅
+ └── "+" → Sign-in required ❌
+
+Signed-in User
+ ├── Text Input ✅
+ ├── Voice Input ✅
+ └── "+" → Document Upload ✅
+```
+
+I would keep it this way.
+
+### Just take care of 4 things
+
+1. **Frontend check**
+   When the user clicks `+`, check `user` from your existing `AuthContext`.
+
+   * Not signed in → show **"Please sign in to upload documents."**
+   * Signed in → open the file picker/upload UI.
+
+2. **Backend security**
+   Don't rely only on the frontend check.
+
+   Your `/api/documents/upload` route should also verify authentication. A user could bypass the UI and directly call the API.
+
+3. **RAG isolation**
+   Your current retriever already accepts `userId`, which is important.
+
+   So:
+
+   ```text
+   User A → retrieves only User A's documents
+   User B → retrieves only User B's documents
+   ```
+
+   **Never allow the client to freely choose another user's `userId`.**
+
+4. **Guest chat should remain unchanged**
+   Guest users should continue using the existing text/voice chat flow without MongoDB document retrieval.
+
+### One important decision
+
+For a signed-in user, should RAG be:
+
+**A. Always active**
+Every question searches their uploaded documents.
+
+or
+
+**B. Document-aware**
+Only search documents when the user has uploaded/selected a document; otherwise behave like normal chat.
+
+I recommend **B architecturally**, because otherwise a normal question like *"What is the capital of France?"* unnecessarily searches the user's documents.
+
+But we don't need to implement this right now. We can keep it in mind while integrating the chat flow.
+
+**For now, let's continue with Conversation Memory + RAG integration.**

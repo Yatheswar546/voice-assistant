@@ -1,5 +1,7 @@
 import { generateChatCompletion } from "@/lib/ai";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { retrieveRelevantChunks } from "@/lib/rag/retriever";
+import { buildRagPrompt } from "@/lib/rag/prompt-builder";
 import { ChatSession } from "@/models/ChatSession";
 import { Message } from "@/models/Message";
 import { AI_CONFIG } from "@/settings/ai.config";
@@ -23,8 +25,6 @@ async function saveUserMessage(
     role: "user",
     content: message,
   });
-
-  // console.log("User message saved.");
 }
 
 async function saveAssistantMessage(
@@ -36,28 +36,23 @@ async function saveAssistantMessage(
     role: "assistant",
     content: message,
   });
-
-  // console.log("Assistant message saved.");
 }
 
 async function getConversationHistory(sessionId: string) {
   const messages = await Message.find({ sessionId })
-    .sort({ createdAt: -1 }) // Newest first
-    .limit(20)               // Keep only the latest 20 messages
+    .sort({ createdAt: -1 })
+    .limit(20)
     .lean();
 
-  // Reverse so Gemini receives the conversation
-  // from oldest to newest.
-  const orderedMessages = messages.reverse();
-
-  // console.log("Conversation History:", orderedMessages);
-
-  return orderedMessages;
+  return messages.reverse();
 }
 
 function convertMessagesToAIHistory(
   messages: any[]
-): Array<{ role: "user" | "assistant" | "system"; content: string }> {
+): Array<{
+  role: "user" | "assistant" | "system";
+  content: string;
+}> {
   return messages.map((message) => ({
     role: message.role === "assistant" ? "assistant" : "user",
     content: message.content,
@@ -70,11 +65,18 @@ export async function processChat({
 }: ProcessChatParams): Promise<ProcessChatResponse> {
   const user = await getAuthenticatedUser();
 
+  if (!message?.trim()) {
+    throw new Error("Message cannot be empty.");
+  }
+
   let currentSessionId = sessionId ?? null;
 
-  // Verify that the supplied session belongs to the logged-in user
-  if(currentSessionId) {
-    if(!user) {
+  // --------------------------------------------------
+  // 1. Verify existing session ownership
+  // --------------------------------------------------
+
+  if (currentSessionId) {
+    if (!user) {
       throw new Error("Unauthorized");
     }
 
@@ -83,10 +85,14 @@ export async function processChat({
       userId: user.userId,
     });
 
-    if(!session) {
+    if (!session) {
       throw new Error("Session not found.");
     }
   }
+
+  // --------------------------------------------------
+  // 2. Create a new session for signed-in users
+  // --------------------------------------------------
 
   if (user && !currentSessionId) {
     const title =
@@ -102,23 +108,54 @@ export async function processChat({
     currentSessionId = session._id.toString();
   }
 
-  if (currentSessionId) {
-    await saveUserMessage(currentSessionId, message);
-  }
+  // --------------------------------------------------
+  // 3. Get previous conversation history
+  // --------------------------------------------------
 
   let conversationHistory: any[] = [];
 
   if (currentSessionId) {
-    conversationHistory = await getConversationHistory(currentSessionId);
+    conversationHistory =
+      await getConversationHistory(currentSessionId);
   }
 
-  const aiMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [
+  // --------------------------------------------------
+  // 4. Retrieve relevant document chunks
+  // --------------------------------------------------
+
+  let ragPrompt = message;
+
+  if (user) {
+    const retrievedChunks = await retrieveRelevantChunks({
+      query: message,
+      userId: user.userId,
+      limit: 5,
+    });
+
+    ragPrompt = buildRagPrompt({
+      question: message,
+      chunks: retrievedChunks,
+    });
+  }
+
+  // --------------------------------------------------
+  // 5. Build AI conversation
+  // --------------------------------------------------
+
+  const aiMessages: Array<{
+    role: "user" | "assistant" | "system";
+    content: string;
+  }> = [
     ...convertMessagesToAIHistory(conversationHistory),
     {
       role: "user",
-      content: message,
+      content: ragPrompt,
     },
   ];
+
+  // --------------------------------------------------
+  // 6. Generate AI response
+  // --------------------------------------------------
 
   const reply = await generateChatCompletion({
     model: AI_CONFIG.MODEL,
@@ -127,9 +164,18 @@ export async function processChat({
     maxOutputTokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
   });
 
+  // --------------------------------------------------
+  // 7. Persist messages
+  // --------------------------------------------------
+
   if (currentSessionId) {
+    await saveUserMessage(currentSessionId, message);
     await saveAssistantMessage(currentSessionId, reply);
   }
+
+  // --------------------------------------------------
+  // 8. Return response
+  // --------------------------------------------------
 
   return {
     reply,
