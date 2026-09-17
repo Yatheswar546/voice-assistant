@@ -676,17 +676,17 @@ Parser
  ├── ExcelParser ✅
  └── ImageParser ✅
 
-05: Content extraction
-PDF text
-DOCX text
-spreadsheet data
-image understanding through Gemini
+05: Content extraction ✅
+PDF text ✅
+DOCX text ✅
+spreadsheet data ✅
+image understanding through Gemini ✅
 
-06: Cleaning
-whitespace normalization
-unnecessary characters
-empty content
-preserving useful structure
+06: Cleaning ✅
+whitespace normalization ✅
+unnecessary characters ✅
+empty content ✅
+preserving useful structure ✅
 
 07: Chunking
 chunk size
