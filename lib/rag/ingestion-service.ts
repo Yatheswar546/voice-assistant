@@ -1,9 +1,11 @@
 import { connectDB } from "@/lib/mongodb";
 import { Document } from "@/models/Document";
+import { DocumentChunk } from "@/models/DocumentChunk";
 import { getParser } from "@/lib/rag/parsers/parser-factory";
 import { downloadFileFromGridFS } from "@/lib/rag/gridfs";
 import { cleanText } from "./cleaner";
 import { chunkText } from "./chunker";
+import { generateEmbedding } from "./embedding";
 
 export async function ingestDocument(documentId: string) {
     await connectDB();
@@ -50,16 +52,35 @@ export async function ingestDocument(documentId: string) {
 
         console.log(`Document ${documentId} generated ${chunks.length} chunks.`);
 
+        await DocumentChunk.deleteMany({
+            documentId: document._id,
+        });
+
+        for(const chunk of chunks) {
+            const embedding = await generateEmbedding(chunk.content);
+
+            await DocumentChunk.create({
+                documentId: document._id,
+                userId: document.userId,
+                content: chunk.content,
+                chunkIndex: chunk.chunkIndex,
+                embedding,
+                metadata: result.metadata ?? {},
+            });
+        }
+
         await Document.findByIdAndUpdate(documentId, {
+            totalChunks: chunks.length,
             status: "completed",
         });
 
         return {
             documentId: document._id.toString(),
             content: cleanedContent,
-            chunks,
+            totalChunks: chunks.length,
             metadata: result.metadata,
         };
+
     } catch(error) {
         await Document.findByIdAndUpdate(documentId, {
             status: "failed",

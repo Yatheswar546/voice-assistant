@@ -696,13 +696,14 @@ chunk size ✅
 overlap ✅
 metadata ✅
 page/sheet information where available ✅
-We have used character-based fixed-size chunking with overlap at 1st Stage.
+We have used "character-based fixed-size" chunking with overlap at 1st Stage.
 
 08: Embeddings
-embedding model
-embedding generation
-vector dimensions
-batching where useful
+embedding model ✅
+embedding generation ✅ (generate embedding for each chunk and store them in MongoDB)
+vector dimensions ✅
+batching where useful 
+We used "gemini-embedding-001" support
 
 09: MongoDB Vector Search
 vector field

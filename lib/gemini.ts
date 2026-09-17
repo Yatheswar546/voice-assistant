@@ -85,3 +85,18 @@ export async function listGeminiModels() {
 }
 
 export const ai = geminiAi;
+
+export async function generateGeminiEmbedding({
+  model,
+  text,
+}: {
+  model: string;
+  text: string;
+}) {
+  const response = await geminiAi.models.embedContent({
+    model,
+    contents: text,
+  });
+
+  return response.embeddings?.[0]?.values ?? [];
+}
