@@ -668,13 +668,13 @@ MIME validation ✅
 size limits
 safe filename handling
 
-04: Parser Architecture
+04: Parser Architecture ✅
 Parser
- ├── Parser factory
- ├── PDFParser
- ├── DocxParser
- ├── ExcelParser
- └── ImageParser
+ ├── Parser factory ✅
+ ├── PDFParser ✅
+ ├── DocxParser ✅
+ ├── ExcelParser ✅
+ └── ImageParser ✅
 
 05: Content extraction
 PDF text

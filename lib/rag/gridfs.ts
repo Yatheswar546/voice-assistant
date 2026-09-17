@@ -49,3 +49,27 @@ export async function uploadFileToGridFS(
     uploadStream.end(buffer);
   });
 }
+
+export async function downloadFileFromGridFS(
+  fileId: string
+): Promise<Buffer> {
+  const bucket = getGridFSBucket();
+
+  const objectId = new ObjectId(fileId);
+
+  return new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+
+    const downloadStream = bucket.openDownloadStream(objectId);
+
+    downloadStream.on("data", (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    downloadStream.on("error", reject);
+
+    downloadStream.on("end", () => {
+      resolve(Buffer.concat(chunks));
+    });
+  });
+}
