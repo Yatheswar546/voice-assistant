@@ -251,7 +251,7 @@ Every page and component should be optimized.
 
 ---
 
-# 11. Deployment
+✅ 11. Deployment
 
 Prepare Version 1.0 for production.
 
@@ -320,7 +320,45 @@ After Version 1.0 is deployed, the project can evolve into a much more advanced 
 
 ---
 
-# Version 2.0 – Intelligent AI Assistant
+# Version 2.0 – Document AI (RAG)
+
+Transform the assistant into a document-aware AI by implementing Retrieval-Augmented Generation (RAG).
+
+### Document Upload
+
+Support:
+
+* PDF
+* DOCX
+* TXT
+* Image
+* Markdown
+
+---
+
+### Retrieval-Augmented Generation (RAG)
+
+Implement:
+
+* Upload PDFs
+* Upload DOCX files
+* Upload TXT/Markdown files
+* Document Chunking
+* Embeddings
+* Vector Database
+* Semantic Search
+* Context Retrieval
+* Answer questions based on uploaded documents
+* AI-powered Question Answering
+
+This is one of the major GenAI features of the project.
+
+---
+
+========================================================================
+========================================================================
+
+# Version 3.0 – Intelligent AI Assistant
 
 Focus on making the chatbot smarter and more interactive.
 
@@ -370,41 +408,6 @@ The assistant will intelligently decide when to call a tool instead of relying s
 * Improved system prompts
 * Context-aware responses
 * More reliable answers
-
-========================================================================
-========================================================================
-
-# Version 3.0 – Document AI (RAG)
-
-Transform the assistant into a document-aware AI by implementing Retrieval-Augmented Generation (RAG).
-
-### Document Upload
-
-Support:
-
-* PDF
-* DOCX
-* TXT
-* Markdown
-
----
-
-### Retrieval-Augmented Generation (RAG)
-
-Implement:
-
-* Upload PDFs
-* Upload DOCX files
-* Upload TXT/Markdown files
-* Document Chunking
-* Embeddings
-* Vector Database
-* Semantic Search
-* Context Retrieval
-* Answer questions based on uploaded documents
-* AI-powered Question Answering
-
-This is one of the major GenAI features of the project.
 
 ========================================================================
 ========================================================================
@@ -688,14 +691,12 @@ unnecessary characters ✅
 empty content ✅
 preserving useful structure ✅
 
-07: Chunking 
-chunk size
-overlap
-metadata
-page/sheet information where available
+07: Chunking ✅
+chunk size ✅ 
+overlap ✅
+metadata ✅
+page/sheet information where available ✅
 We have used character-based fixed-size chunking with overlap at 1st Stage.
-
-
 
 08: Embeddings
 embedding model

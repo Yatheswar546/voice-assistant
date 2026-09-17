@@ -2,6 +2,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Document } from "@/models/Document";
 import { getParser } from "@/lib/rag/parsers/parser-factory";
 import { downloadFileFromGridFS } from "@/lib/rag/gridfs";
+import { cleanText } from "./cleaner";
+import { chunkText } from "./chunker";
 
 export async function ingestDocument(documentId: string) {
     await connectDB();
@@ -42,13 +44,20 @@ export async function ingestDocument(documentId: string) {
 
         const result = await parser.parse(file);
 
+        const cleanedContent = cleanText(result.content);
+
+        const chunks = chunkText(cleanedContent);
+
+        console.log(`Document ${documentId} generated ${chunks.length} chunks.`);
+
         await Document.findByIdAndUpdate(documentId, {
             status: "completed",
         });
 
         return {
             documentId: document._id.toString(),
-            content: result.content,
+            content: cleanedContent,
+            chunks,
             metadata: result.metadata,
         };
     } catch(error) {
