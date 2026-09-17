@@ -708,6 +708,6 @@ We used "gemini-embedding-001" support
 09: MongoDB Vector Search
 vector field
 Atlas Vector Search index
-$vectorSearch
+$vectorSearch 
 storing chunk metadata
 preparing for retrieval
