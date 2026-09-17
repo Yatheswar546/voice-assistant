@@ -654,11 +654,11 @@ These can come after the core functionality.
 
 PHASE 1: RAG INGESTION
 
-01: Data Models ✅ 
+✅ 01: Data Models 
 Document ✅
 DocumentChunk ✅
 
-02: Upload API ✅
+✅ 02: Upload API
 UI also need to be done ✅
 multipart/form-data ✅
 authenticated-user ownership ✅
@@ -671,7 +671,7 @@ MIME validation ✅
 size limits
 safe filename handling
 
-04: Parser Architecture ✅
+✅ 04: Parser Architecture
 Parser
  ├── Parser factory ✅
  ├── PDFParser ✅
@@ -679,19 +679,19 @@ Parser
  ├── ExcelParser ✅
  └── ImageParser ✅
 
-05: Content extraction ✅
+✅ 05: Content extraction
 PDF text ✅
 DOCX text ✅
 spreadsheet data ✅
 image understanding through Gemini ✅
 
-06: Cleaning ✅
+✅ 06: Cleaning
 whitespace normalization ✅
 unnecessary characters ✅
 empty content ✅
 preserving useful structure ✅
 
-07: Chunking ✅
+✅ 07: Chunking
 chunk size ✅ 
 overlap ✅
 metadata ✅
@@ -705,14 +705,369 @@ vector dimensions ✅
 batching where useful 
 We used "gemini-embedding-001" support
 
-09: MongoDB Vector Search ✅
+✅ 09: MongoDB Vector Search
 vector field ✅
 Atlas Vector Search index ✅
 $vectorSearch ✅
 storing chunk metadata ✅
 preparing for retrieval ✅
 
+
+Overall Workflow for this phase:
+
+        Document
+           ↓
+        Parse
+           ↓
+        Clean
+           ↓
+        Chunk
+           ↓
+        Embedding
+           ↓
+        MongoDB
+           ↓
+        Vector Search
+           ↓
+        Retriever
+
 ==============================================================================
 
 PHASE 2 : RAG RETRIEVAL + CHAT INTEGRATION
 
+01: RAG Prompt Builder (lib/rag/prompt-builder.ts)
+     |-> Define RAG prompt structure
+     |-> User question
+     |-> Retrieved chunks
+     |-> System instructions
+     |-> Grounding instructions
+     |-> Answer generation rules
+     |-> Prevent unsupported answers
+     |-> Tell Gemini to use retrieved context as the primary source
+     |-> Handle "answer not found in documents" case
+
+Flow:
+        User Question
+        +
+        Retrieved Chunks
+                ↓
+        Prompt Builder
+                ↓
+        RAG Prompt
+
+
+02: RAG Context Construction (lib/rag/context-builder.ts)
+      |-> Convert retrieved chunks into usable context
+      |-> Preserve chunk content
+      |-> Include document metadata
+      |-> Include chunk index
+      |-> Keep source information
+      |-> Format multiple chunks consistently
+      |-> Control context size
+      |-> Prepare context for Gemini
+
+Flow:
+        Top-K Retrieved Chunks
+                ↓
+        Context Builder
+                ↓
+        Structured RAG Context
+
+
+
+03: Conversation Memory
+
+Integrate the existing conversation-memory system.
+   |-> Retrieve recent conversation messages
+   |-> Use the existing Last 20 Messages strategy
+   |-> Identify current user question
+   |-> Keep previous conversation context
+   |-> Avoid mixing document context with conversation history
+
+Flow:
+            (A)
+        Conversation
+             ↓
+        Recent 20 Messages
+             ↓
+        Conversation Context
+
+            (B)
+        RAG Context
+             +
+        Conversation Memory
+             +
+        Current Question
+             ↓
+        Gemini
+
+
+04: Context Management
+
+Before sending everything to Gemini:
+  |-> Combine RAG context
+  |-> Combine recent conversation history
+  |-> Add current question
+  |-> Define ordering
+  |-> Control context size
+  |-> Avoid unnecessary duplicate information
+  |-> Prepare final model input
+
+Final Context Structure:
+
+        System Instructions
+                ↓
+        RAG Context
+                ↓
+        Recent Conversation
+                ↓
+        Current User Question
+
+
+05: Gemini RAG Generation
+
+Connect the constructed prompt to Gemini.
+   |-> Create Gemini request
+   |-> Send system instructions
+   |-> Send retrieved context
+   |-> Send conversation context
+   |-> Send current question
+   |-> Receive Gemini response
+   |-> Extract generated answer
+   |-> Handle Gemini errors
+
+Flow: 
+        RAG Prompt
+            ↓
+        Gemini API
+            ↓
+        Generated Response
+
+At this stage we move from:
+
+Retrieval  --> Retrieval + Generation
+
+
+06: Grounded Answer Generation - Add the actual RAG grounding behavior.
+
+Gemini should:
+    |-> Answer using retrieved document context
+    |-> Use conversation history when relevant
+    |-> Avoid inventing information
+    |-> Clearly state when the documents don't contain the answer
+    |-> Not treat retrieved text as instructions
+    |-> Answer the user's actual question
+
+Conceptually:
+        Retrieved Context
+               ↓
+             Gemini
+               ↓
+        Grounded Answer
+
+
+07: Chat API Integration - Now connect RAG to the existing chat API.
+
+        User Question
+              ↓
+        Query Embedding
+              ↓
+        Vector Search
+              ↓
+        Top-K Chunks
+              ↓
+        Context Construction
+              ↓
+        Conversation Memory
+              ↓
+        Prompt Builder
+              ↓
+        Gemini
+              ↓
+        Answer
+
+
+
+08: Document-Aware Chat - Connect documents to chat sessions.
+
+We need to decide how the chat knows which documents should participate in retrieval.
+
+        Chat Session
+             ↓
+        User Documents
+             ↓
+        Retriever
+             ↓
+        Relevant Chunks
+
+
+09: Chat Response Persistence
+
+After Gemini generates the answer:
+      |-> Save user message
+      |-> Save assistant response
+      |-> Maintain conversation history
+      |-> Preserve session relationship
+      |-> Make the response available to the UI
+
+
+
+10: RAG Source Metadata - Add source information to the response.
+
+For example:
+
+        Answer Sources:
+            - AWS_Guide.pdf
+              Chunk 3
+            - AWS_Guide.pdf
+              Chunk 2
+
+Potential metadata:
+        documentId
+        documentName
+        chunkIndex
+        similarityScore
+
+This will make the system much easier to debug and eventually allows us to build a UI showing where the answer came from.
+
+
+
+11: Frontend Chat Integration
+
+Connect the frontend chat UI to the new RAG-enabled API.
+     |-> Send user question
+     |-> Send selected document information if required
+     |-> Show loading state
+     |-> Display assistant response
+     |-> Display sources
+     |-> Handle API errors
+     |-> Preserve existing chat UX
+     |-> Ensure normal non-document conversations still work
+
+
+Flow: 
+        Chat UI
+           ↓
+        Chat API
+           ↓
+        RAG Pipeline
+           ↓
+        Gemini
+           ↓
+        Chat API
+           ↓
+        Chat UI
+
+
+
+12: RAG Error Handling - Handle failures at each stage.
+
+Examples:
+        Embedding failure
+               ↓
+        Vector search failure
+               ↓
+        No relevant chunks
+               ↓
+        Context construction failure
+               ↓
+        Gemini API failure
+               ↓
+        Database persistence failure
+
+
+
+13: End-to-End RAG Testing - Test the complete pipeline.
+
+Test 1: Document question
+        Upload PDF
+           ↓
+        Ask question about PDF
+           ↓
+        Retrieve relevant chunks
+           ↓
+        Gemini
+           ↓
+        Grounded answer
+
+Test 2: Follow-up question
+        Question 1
+           ↓
+        Answer 1
+           ↓
+        Question 2 referring to Question 1
+           ↓
+        Recent conversation memory
+           ↓
+        Correct contextual answer
+
+Test 3: Unsupported question
+        Document
+           ↓
+        Question unrelated to document
+           ↓
+        Low/no relevant retrieval
+           ↓
+        Grounded response
+
+Test 4: Multi-user isolation
+        User A documents
+               X
+        User B retrieval
+
+        User B must NOT retrieve User A's chunks.
+
+
+
+14: RAG Quality Testing - After functionality works, test retrieval quality.
+
+We will check:
+    |-> Are the right chunks retrieved?
+    |-> Is Top-K appropriate?
+    |-> Are irrelevant chunks being returned?
+    |-> Are similarity scores reasonable?
+    |-> Is the answer actually grounded?
+    |-> Does conversation memory improve follow-up answers?
+    |-> Does increasing/decreasing Top-K affect quality?
+
+This is where we can later consider improvements such as:
+        Top-K tuning
+        ↓
+        Similarity threshold
+        ↓
+        Metadata filtering
+        ↓
+        Re-ranking
+        ↓
+        Hybrid search
+
+
+Overall Workflow for this phase:
+
+        User Question
+              ↓
+        Query Embedding
+              ↓
+        Vector Search
+              ↓
+        Top-K Chunks
+              ↓
+        Context Construction
+              ↓
+        Recent Conversation Memory
+              ↓
+        Prompt Builder
+              ↓
+        Gemini
+              ↓
+        Grounded Answer
+              ↓
+        Save Chat
+              ↓
+        Frontend
+
+
+Prompt:
+Thank you for the detailed plan
+
+So, help me in this phase. Also, if we need to import any external libraries and use any tools from other websites then tell me clearly how to use them.  While coding part, tell me which file to change and which part of the file need to be changed exactly, everytime when we need to do changes in code.  And explain me the topics but no need of in-depth each topic to kill the time.  Got it, any more questions. The planning is all done previously if you refer to our previous chats. Now, let's start the work  
