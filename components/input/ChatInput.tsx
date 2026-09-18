@@ -48,20 +48,30 @@ export default function ChatInput({
   const [uploadStatus, setUploadStatus] =
     useState<UploadStatus>(null);
 
+  // Temporary filename used while a document is uploading
+  const [uploadingFileName, setUploadingFileName] =
+    useState<string | null>(null);
+
   const handleUploadStatusChange = (
     status: UploadStatus,
     fileName?: string
   ) => {
     setUploadStatus(status);
+
+    if (status === "uploading") {
+      setUploadingFileName(fileName ?? null);
+    }
+
+    if (status === "uploaded" || status === "error") {
+      setUploadingFileName(null);
+    }
   };
 
-  /*
-   * Show the document from ChatContext.
-   *
-   * The filename is no longer stored locally here.
-   */
+  const documentName =
+    uploadingFileName ?? activeDocumentName;
+
   const shouldShowDocument =
-    Boolean(activeDocumentName);
+    Boolean(documentName);
 
   return (
     <footer className="border-t border-white/10 px-4 py-2 lg:px-12 lg:py-4">
@@ -74,7 +84,7 @@ export default function ChatInput({
             />
 
             <span className="max-w-[250px] truncate lg:max-w-[500px]">
-              {activeDocumentName}
+              {documentName}
             </span>
 
             {uploadStatus === "uploading" && (
