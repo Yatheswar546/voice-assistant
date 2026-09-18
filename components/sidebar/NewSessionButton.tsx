@@ -7,11 +7,20 @@ export default function NewSessionButton() {
   const {
     setMessages,
     setActiveSessionId,
+    setActiveDocumentId,
+    setActiveDocumentName,
   } = useChat();
 
   const handleNewSession = () => {
+    // Clear current chat messages
     setMessages([]);
+
+    // Start a new session
     setActiveSessionId(null);
+
+    // Clear document associated with previous session
+    setActiveDocumentId(null);
+    setActiveDocumentName(null);
   };
 
   return (
