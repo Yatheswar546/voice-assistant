@@ -4,6 +4,25 @@ export const geminiAi = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1500;
+
+function isRetryableGeminiError(error: unknown): boolean {
+  const errorMessage =
+    error instanceof Error ? error.message : String(error);
+
+  return (
+    errorMessage.includes("503") ||
+    errorMessage.includes("UNAVAILABLE") ||
+    errorMessage.includes("429") ||
+    errorMessage.includes("RESOURCE_EXHAUSTED")
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function generateGeminiChatCompletion({
   model,
   messages,
@@ -11,7 +30,10 @@ export async function generateGeminiChatCompletion({
   maxOutputTokens,
 }: {
   model: string;
-  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  messages: Array<{
+    role: "user" | "assistant" | "system";
+    content: string;
+  }>;
   temperature?: number;
   maxOutputTokens?: number;
 }) {
@@ -20,16 +42,50 @@ export async function generateGeminiChatCompletion({
     parts: [{ text: message.content }],
   }));
 
-  const response = await geminiAi.models.generateContent({
-    model,
-    contents,
-    config: {
-      temperature,
-      maxOutputTokens,
-    },
-  });
+  let lastError: unknown;
 
-  return response.text ?? "Sorry, I couldn't generate a response.";
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(
+        `Gemini request attempt ${attempt + 1}/${MAX_RETRIES + 1}`
+      );
+
+      const response = await geminiAi.models.generateContent({
+        model,
+        contents,
+        config: {
+          temperature,
+          maxOutputTokens,
+        },
+      });
+
+      return response.text ?? "Sorry, I couldn't generate a response.";
+    } catch (error) {
+      lastError = error;
+
+      console.error(
+        `Gemini request failed on attempt ${attempt + 1}:`,
+        error
+      );
+
+      const shouldRetry =
+        attempt < MAX_RETRIES && isRetryableGeminiError(error);
+
+      if (!shouldRetry) {
+        break;
+      }
+
+      console.log(
+        `Retrying Gemini request in ${RETRY_DELAY_MS}ms...`
+      );
+
+      await sleep(RETRY_DELAY_MS);
+    }
+  }
+
+  throw new Error(
+    "The AI service is temporarily unavailable. Please try again in a moment."
+  );
 }
 
 export async function generateGeminiImageDescription({
@@ -81,6 +137,7 @@ Do not invent information that is not visible.
 
 export async function listGeminiModels() {
   const response = await geminiAi.models.list();
+
   return ((response as any)?.models ?? response ?? []) as any[];
 }
 
