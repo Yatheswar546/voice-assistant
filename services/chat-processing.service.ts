@@ -14,6 +14,12 @@ interface ProcessChatParams {
 interface ProcessChatResponse {
   reply: string;
   sessionId: string | null;
+  sources: Array<{
+    documentId: string;
+    documentName: string;
+    chunkIndex: number;
+    score?: number;
+  }>;
 }
 
 async function saveUserMessage(
@@ -120,7 +126,13 @@ export async function processChat({
   }
 
   // --------------------------------------------------
-  // 4. Retrieve relevant document chunks
+  // 4. Initialize RAG sources
+  // --------------------------------------------------
+
+  let sources: ProcessChatResponse["sources"] = [];
+
+  // --------------------------------------------------
+  // 5. Retrieve relevant document chunks
   // --------------------------------------------------
 
   let ragPrompt = message;
@@ -132,6 +144,19 @@ export async function processChat({
       limit: 5,
     });
 
+    sources = retrievedChunks.map((chunk) => ({
+      documentId: String(chunk.documentId),
+
+      documentName:
+        typeof chunk.metadata?.originalName === "string"
+          ? chunk.metadata.originalName
+          : "Unknown Document",
+
+      chunkIndex: chunk.chunkIndex,
+
+      score: chunk.score,
+    }));
+
     ragPrompt = buildRagPrompt({
       question: message,
       chunks: retrievedChunks,
@@ -139,7 +164,7 @@ export async function processChat({
   }
 
   // --------------------------------------------------
-  // 5. Build AI conversation
+  // 6. Build AI conversation
   // --------------------------------------------------
 
   const aiMessages: Array<{
@@ -147,6 +172,7 @@ export async function processChat({
     content: string;
   }> = [
     ...convertMessagesToAIHistory(conversationHistory),
+
     {
       role: "user",
       content: ragPrompt,
@@ -154,7 +180,7 @@ export async function processChat({
   ];
 
   // --------------------------------------------------
-  // 6. Generate AI response
+  // 7. Generate AI response
   // --------------------------------------------------
 
   const reply = await generateChatCompletion({
@@ -165,7 +191,7 @@ export async function processChat({
   });
 
   // --------------------------------------------------
-  // 7. Persist messages
+  // 8. Persist messages
   // --------------------------------------------------
 
   if (currentSessionId) {
@@ -174,11 +200,12 @@ export async function processChat({
   }
 
   // --------------------------------------------------
-  // 8. Return response
+  // 9. Return response
   // --------------------------------------------------
 
   return {
     reply,
     sessionId: currentSessionId,
+    sources,
   };
 }
