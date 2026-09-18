@@ -37,7 +37,36 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 1. Load or create chat session
+   * 1. Validate the selected document
+   * ---------------------------------------------------------
+   *
+   * If a documentId is provided, make sure:
+   * - the document exists
+   * - it belongs to the logged-in user
+   * - ingestion has completed
+   */
+
+  let activeDocumentName: string | null = null;
+
+  if (user && documentId) {
+    const document = await Document.findOne({
+      _id: documentId,
+      userId: user.userId,
+      status: "completed",
+    }).lean();
+
+    if (!document) {
+      throw new Error(
+        "Document not found or is not ready for questions."
+      );
+    }
+
+    activeDocumentName = document.originalName;
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * 2. Load or create chat session
    * ---------------------------------------------------------
    */
 
@@ -45,6 +74,10 @@ export async function processChat({
     const newSession = await ChatSession.create({
       userId: user.userId,
       title: message.slice(0, 50),
+
+      // Associate the newly created chat with the document.
+      documentId: documentId ?? null,
+      documentName: activeDocumentName,
     });
 
     activeSessionId = newSession._id.toString();
@@ -52,8 +85,33 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 2. Load previous conversation history
+   * 3. Update existing session's document
    * ---------------------------------------------------------
+   *
+   * If this is an existing chat and a document was uploaded,
+   * associate that document with the existing chat session.
+   */
+
+  if (user && activeSessionId && documentId) {
+    await ChatSession.findOneAndUpdate(
+      {
+        _id: activeSessionId,
+        userId: user.userId,
+      },
+      {
+        documentId,
+        documentName: activeDocumentName,
+      }
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * 4. Load previous conversation history
+   * ---------------------------------------------------------
+   *
+   * Load the previous 20 messages before adding the
+   * current user message to the AI context.
    */
 
   let previousMessages: Array<{
@@ -80,13 +138,14 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 3. RAG retrieval
+   * 5. RAG retrieval
    * ---------------------------------------------------------
    *
    * RAG runs only when a specific document is selected.
    *
-   * Without documentId, the user gets normal AI chat and
-   * previously uploaded documents are not searched.
+   * Without documentId:
+   * - no document search
+   * - normal AI conversation
    */
 
   let ragPrompt = message;
@@ -95,33 +154,16 @@ export async function processChat({
 
   if (user && documentId) {
     /*
-     * Verify that the document:
-     * - exists
-     * - belongs to the authenticated user
-     * - has completed ingestion
+     * We already validated the document above.
+     *
+     * Retrieve chunks ONLY from this document.
      */
-
-    const document = await Document.findOne({
-      _id: documentId,
-      userId: user.userId,
-      status: "completed",
-    }).lean();
-
-    if (!document) {
-      throw new Error(
-        "Document not found or is not ready for questions."
-      );
-    }
 
     console.log("========== RAG RETRIEVAL ==========");
     console.log("[RAG] Question:", message);
     console.log("[RAG] Document ID:", documentId);
-    console.log("[RAG] Document:", document.originalName);
+    console.log("[RAG] Document:", activeDocumentName);
     console.log("[RAG] Requested Top-K: 5");
-
-    /*
-     * Retrieve chunks ONLY from the selected document.
-     */
 
     const retrievedChunks = await retrieveRelevantChunks({
       query: message,
@@ -139,15 +181,18 @@ export async function processChat({
       console.log(`[RAG] Source ${index + 1}:`);
 
       console.log(
-        `      Document: ${chunk.metadata?.originalName ||
-        document.originalName
+        `      Document: ${
+          typeof chunk.metadata?.originalName === "string"
+            ? chunk.metadata.originalName
+            : activeDocumentName
         }`
       );
 
       console.log(`      Chunk: ${chunk.chunkIndex}`);
 
       console.log(
-        `      Score: ${chunk.score?.toFixed(4) ?? "N/A"
+        `      Score: ${
+          chunk.score?.toFixed(4) ?? "N/A"
         }`
       );
     });
@@ -155,10 +200,10 @@ export async function processChat({
     console.log("===================================");
 
     /*
-     * Build the final RAG prompt.
+     * Build the RAG prompt.
      *
-     * buildRagPrompt() internally calls buildRagContext()
-     * using the retrieved chunks.
+     * buildRagPrompt() internally builds the document
+     * context from the retrieved chunks.
      */
 
     ragPrompt = buildRagPrompt({
@@ -167,7 +212,7 @@ export async function processChat({
     });
 
     /*
-     * Keep source information for the API response.
+     * Return retrieved source information.
      */
 
     sources = retrievedChunks.map((chunk) => ({
@@ -175,7 +220,7 @@ export async function processChat({
       documentName:
         typeof chunk.metadata?.originalName === "string"
           ? chunk.metadata.originalName
-          : document.originalName,
+          : activeDocumentName || "Unknown Document",
       chunkIndex: chunk.chunkIndex,
       score: chunk.score,
     }));
@@ -183,7 +228,7 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 4. Build AI conversation
+   * 6. Build AI conversation
    * ---------------------------------------------------------
    */
 
@@ -197,7 +242,7 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 5. Generate AI response
+   * 7. Generate AI response
    * ---------------------------------------------------------
    */
 
@@ -210,7 +255,7 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 6. Persist conversation
+   * 8. Persist conversation
    * ---------------------------------------------------------
    */
 

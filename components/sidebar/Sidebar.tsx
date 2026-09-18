@@ -5,11 +5,16 @@ import { useEffect } from "react";
 import Logo from "@/components/common/Logo";
 import NewSessionButton from "./NewSessionButton";
 import SessionGroup from "./SessionGroup";
+
 import { useChat } from "@/context/ChatContext";
 import { getSessionMessages } from "@/services/message.service";
 import { useAuth } from "@/hooks/useAuth";
-import { deleteSession, renameSession } from "@/services/session.service";
+import {
+  deleteSession,
+  renameSession,
+} from "@/services/session.service";
 import { groupSessions } from "@/utils/groupSessions";
+
 import AuthButton from "../auth/AuthButton";
 
 interface SidebarProps {
@@ -21,7 +26,6 @@ export default function Sidebar({
   isOpen,
   onClose,
 }: SidebarProps) {
-
   const { isAuthenticated } = useAuth();
 
   const {
@@ -29,7 +33,9 @@ export default function Sidebar({
     setMessages,
     activeSessionId,
     setActiveSessionId,
-    loadSessions
+    setActiveDocumentId,
+    setActiveDocumentName,
+    loadSessions,
   } = useChat();
 
   const groupedSessions = groupSessions(sessions);
@@ -42,34 +48,68 @@ export default function Sidebar({
 
   async function handleSessionClick(sessionId: string) {
     try {
+      /*
+       * Find the selected session so we can restore
+       * its associated document.
+       */
+      const selectedSession = sessions.find(
+        (session) => session._id === sessionId
+      );
+
       setActiveSessionId(sessionId);
 
-      const messages = await getSessionMessages(sessionId);
+      /*
+       * Restore the document associated with this chat.
+       *
+       * If the session has no document, clear the
+       * currently active document.
+       */
+      if (selectedSession?.documentId) {
+        setActiveDocumentId(selectedSession.documentId);
+        setActiveDocumentName(
+          selectedSession.documentName
+        );
+      } else {
+        setActiveDocumentId(null);
+        setActiveDocumentName(null);
+      }
+
+      /*
+       * Load the messages for the selected session.
+       */
+      const messages =
+        await getSessionMessages(sessionId);
 
       setMessages(messages);
 
-      // console.log("Loaded Session:", sessionId);
-
+      // Close mobile sidebar after selecting a chat.
+      onClose();
     } catch (error) {
       // console.error(error);
     }
   }
 
-  const handleDeleteSession = async (sessionId: string) => {
+  const handleDeleteSession = async (
+    sessionId: string
+  ) => {
     try {
       await deleteSession(sessionId);
 
-      // Refresh the sidebar
+      // Refresh the sidebar.
       await loadSessions();
 
-      // If the deleted chat was currently open,
-      // clear the chat window.
+      /*
+       * If the deleted chat was currently open,
+       * clear the chat and document state.
+       */
       if (activeSessionId === sessionId) {
         setMessages([]);
         setActiveSessionId(null);
+        setActiveDocumentId(null);
+        setActiveDocumentName(null);
       }
     } catch (error) {
-      // console.error("Failed to delete session:", error);
+      // console.error("Failed to delete chat:", error);
     }
   };
 
@@ -81,28 +121,24 @@ export default function Sidebar({
       await renameSession(sessionId, newTitle);
 
       await loadSessions();
-
     } catch (error) {
-      // console.error("Failed to rename session:", error);
+      // console.error("Failed to rename chat:", error);
     }
   };
 
   return (
     <>
-
-      <aside className="m-4 hidden h-[calc(100vh-2rem)] w-96 shrink-0 rounded-3xl border border-white/10 bg-[#111217] pt-6 lg:flex flex-col">
-
+      <aside className="m-4 hidden h-[calc(100vh-2rem)] w-96 shrink-0 flex-col rounded-3xl border border-white/10 bg-[#111217] pt-6 lg:flex">
         {/* Logo */}
         <Logo />
 
-        {/* Button */}
+        {/* New Session */}
         <div className="mt-8 px-6">
           <NewSessionButton />
         </div>
 
         {/* Session List */}
         <div className="mt-8 flex-1 overflow-y-auto px-6 pb-6">
-
           {!isAuthenticated ? (
             <div className="flex h-full items-center justify-center px-2 text-center text-sm text-slate-400">
               Login to view chat history
@@ -119,13 +155,10 @@ export default function Sidebar({
                   onDelete={handleDeleteSession}
                   onRename={handleRenameSession}
                 />
-              ))
-              }
+              ))}
             </>
           )}
-
         </div>
-
       </aside>
 
       {/* Mobile Overlay */}
@@ -139,37 +172,38 @@ export default function Sidebar({
       {/* Mobile Sidebar */}
       <aside
         className={`
-        fixed
-        top-0
-        left-0
-        z-50
-        h-screen
-        w-80
-        bg-[#111217]
-        border-r
-        border-white/10
-        p-6
-        transform
-        transition-transform
-        duration-300
-        lg:hidden
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
+          fixed
+          top-0
+          left-0
+          z-50
+          h-screen
+          w-80
+          transform
+          border-r
+          border-white/10
+          bg-[#111217]
+          p-6
+          transition-transform
+          duration-300
+          lg:hidden
+          ${
+            isOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+        `}
       >
-
         {/* Logo */}
         <Logo />
 
-        {/* Button */}
+        {/* New Session */}
         <div className="mt-8 px-2">
           <NewSessionButton />
         </div>
 
         {/* Session List */}
         <div className="mt-8 flex flex-1 flex-col">
-
           <div className="flex-1 overflow-y-auto pb-4">
-
             {!isAuthenticated ? (
               <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-400">
                 Login to view chat history
@@ -189,18 +223,14 @@ export default function Sidebar({
                 ))}
               </>
             )}
-
           </div>
 
           {/* Mobile Login / Profile */}
           <div className="mt-auto border-t border-white/10 pt-5">
             <AuthButton mobile />
           </div>
-
         </div>
-
       </aside>
-
     </>
   );
 }

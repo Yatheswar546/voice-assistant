@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import AssistantHeader from "@/components/assistant/AssistantHeader";
 import ChatWindow from "@/components/chat/ChatWindow";
@@ -25,21 +25,22 @@ export default function MainContent({
 }: MainContentProps) {
   const [input, setInput] = useState("");
 
-  // Stores the document currently selected for RAG questions.
-  const [activeDocumentId, setActiveDocumentId] =
-    useState<string | null>(null);
-
   const {
     messages,
     setMessages,
     activeSessionId,
     setActiveSessionId,
+    activeDocumentId,
+    activeDocumentName,
+    setActiveDocumentId,
+    setActiveDocumentName,
     isLoading,
     setIsLoading,
     loadSessions,
   } = useChat();
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] =
+    useState(false);
 
   const {
     isListening,
@@ -56,33 +57,40 @@ export default function MainContent({
     voices,
   } = useSpeechSynthesis();
 
-  /**
-   * When the user starts a new chat,
-   * remove the previously selected document.
+  /*
+   * ---------------------------------------------------------
+   * Handle document upload
+   * ---------------------------------------------------------
    *
-   * This prevents a document from the previous chat
-   * accidentally becoming active in the new chat.
+   * FileUploadButton gives us the document ID and filename.
+   *
+   * We store both in ChatContext so the active document
+   * belongs to the current chat.
    */
-  useEffect(() => {
-    if (activeSessionId === null) {
-      setActiveDocumentId(null);
-    }
-  }, [activeSessionId]);
 
-  /**
-   * Called by ChatInput after a document is
-   * successfully uploaded.
-   */
   const handleDocumentUploaded = (
     documentId: string,
     fileName: string
   ) => {
-    console.log("Document uploaded successfully.");
-    console.log("Document name:", fileName);
-    console.log("Active document ID:", documentId);
+    console.log(
+      "[CHAT] Active document ID:",
+      documentId
+    );
+
+    console.log(
+      "[CHAT] Active document:",
+      fileName
+    );
 
     setActiveDocumentId(documentId);
+    setActiveDocumentName(fileName);
   };
+
+  /*
+   * ---------------------------------------------------------
+   * Send message
+   * ---------------------------------------------------------
+   */
 
   const handleSendMessage = async () => {
     if (isLoading) return;
@@ -96,24 +104,40 @@ export default function MainContent({
       message: trimmedMessage,
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [
+      ...prev,
+      newMessage,
+    ]);
+
     setInput("");
     setIsLoading(true);
 
     try {
       const assistantResponse = await sendMessage({
         message: trimmedMessage,
-        sessionId: activeSessionId ?? undefined,
+        sessionId:
+          activeSessionId ?? undefined,
 
-        // Send the currently active document to the backend.
-        documentId: activeDocumentId ?? undefined,
+        /*
+         * Send the document associated with the
+         * current chat.
+         */
+        documentId:
+          activeDocumentId ?? undefined,
       });
 
+      /*
+       * A new session is created on the backend
+       * when the first message is sent.
+       */
       if (
         !activeSessionId &&
         assistantResponse.sessionId
       ) {
-        setActiveSessionId(assistantResponse.sessionId);
+        setActiveSessionId(
+          assistantResponse.sessionId
+        );
+
         await loadSessions();
       }
 
@@ -161,7 +185,9 @@ export default function MainContent({
 
       <SettingsPanel
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() =>
+          setIsSettingsOpen(false)
+        }
         voices={voices}
         speak={speak}
         stop={stop}
@@ -183,7 +209,10 @@ export default function MainContent({
         isListening={isListening}
         startListening={startListening}
         stopListening={stopListening}
-        onDocumentUploaded={handleDocumentUploaded}
+        activeDocumentName={activeDocumentName}
+        onDocumentUploaded={
+          handleDocumentUploaded
+        }
       />
     </main>
   );

@@ -27,6 +27,16 @@ interface ChatContextType {
     React.SetStateAction<string | null>
   >;
 
+  activeDocumentId: string | null;
+  setActiveDocumentId: React.Dispatch<
+    React.SetStateAction<string | null>
+  >;
+
+  activeDocumentName: string | null;
+  setActiveDocumentName: React.Dispatch<
+    React.SetStateAction<string | null>
+  >;
+
   isLoading: boolean;
   setIsLoading: React.Dispatch<
     React.SetStateAction<boolean>
@@ -42,7 +52,6 @@ const ChatContext = createContext<
 >(undefined);
 
 export function useChat() {
-
   const context = useContext(ChatContext);
 
   if (!context) {
@@ -59,12 +68,21 @@ export function ChatProvider({
 }: {
   children: ReactNode;
 }) {
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    []
+  );
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>(
+    []
+  );
 
   const [activeSessionId, setActiveSessionId] =
+    useState<string | null>(null);
+
+  const [activeDocumentId, setActiveDocumentId] =
+    useState<string | null>(null);
+
+  const [activeDocumentName, setActiveDocumentName] =
     useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -73,6 +91,8 @@ export function ChatProvider({
     setSessions([]);
     setMessages([]);
     setActiveSessionId(null);
+    setActiveDocumentId(null);
+    setActiveDocumentName(null);
   };
 
   const loadSessions = async () => {
@@ -89,12 +109,22 @@ export function ChatProvider({
       value={{
         messages,
         setMessages,
+
         sessions,
         setSessions,
+
         activeSessionId,
         setActiveSessionId,
+
+        activeDocumentId,
+        setActiveDocumentId,
+
+        activeDocumentName,
+        setActiveDocumentName,
+
         isLoading,
         setIsLoading,
+
         clearChat,
         loadSessions,
       }}

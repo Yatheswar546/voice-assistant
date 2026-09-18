@@ -912,7 +912,7 @@ After Gemini generates the answer:
 
 
 
-10: RAG Source Metadata - Add source information to the response.
+✅ 10: RAG Source Metadata - Add source information to the response.
 
 For example:
 
@@ -935,10 +935,10 @@ This will make the system much easier to debug and eventually allows us to build
 11: Frontend Chat Integration
 
 Connect the frontend chat UI to the new RAG-enabled API.
-     |-> Send user question
-     |-> Send selected document information if required
-     |-> Show loading state
-     |-> Display assistant response
+     |-> Send user question ✅
+     |-> Send selected document information if required ✅
+     |-> Show loading state ✅
+     |-> Display assistant response ✅
      |-> Display sources
      |-> Handle API errors
      |-> Preserve existing chat UX

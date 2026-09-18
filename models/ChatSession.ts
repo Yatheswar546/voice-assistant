@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 const ChatSessionSchema = new Schema(
   {
@@ -13,10 +13,24 @@ const ChatSessionSchema = new Schema(
       required: true,
       trim: true,
     },
+
+    documentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Document",
+      default: null,
+    },
+
+    documentName: {
+      type: String,
+      default: null,
+      trim: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export const ChatSession = models.ChatSession || model("ChatSession", ChatSessionSchema);
+export const ChatSession =
+  models.ChatSession ||
+  model("ChatSession", ChatSessionSchema);
