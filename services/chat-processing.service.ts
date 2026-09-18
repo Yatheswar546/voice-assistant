@@ -1,17 +1,21 @@
-import { generateChatCompletion } from "@/lib/ai";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { generateChatCompletion } from "@/lib/ai";
+import { AI_CONFIG } from "@/settings/ai.config";
+
+import { ChatSession } from "@/models/ChatSession";
+import { Document } from "@/models/Document";
+import { Message } from "@/models/Message";
+
 import { retrieveRelevantChunks } from "@/lib/rag/retriever";
 import { buildRagPrompt } from "@/lib/rag/prompt-builder";
-import { ChatSession } from "@/models/ChatSession";
-import { Message } from "@/models/Message";
-import { AI_CONFIG } from "@/settings/ai.config";
 
 interface ProcessChatParams {
   message: string;
-  sessionId?: string | null;
+  sessionId?: string;
+  documentId?: string;
 }
 
-interface ProcessChatResponse {
+export interface ProcessChatResponse {
   reply: string;
   sessionId: string | null;
   sources: Array<{
@@ -22,166 +26,180 @@ interface ProcessChatResponse {
   }>;
 }
 
-async function saveUserMessage(
-  sessionId: string,
-  message: string
-) {
-  await Message.create({
-    sessionId,
-    role: "user",
-    content: message,
-  });
-}
-
-async function saveAssistantMessage(
-  sessionId: string,
-  message: string
-) {
-  await Message.create({
-    sessionId,
-    role: "assistant",
-    content: message,
-  });
-}
-
-async function getConversationHistory(sessionId: string) {
-  const messages = await Message.find({ sessionId })
-    .sort({ createdAt: -1 })
-    .limit(20)
-    .lean();
-
-  return messages.reverse();
-}
-
-function convertMessagesToAIHistory(
-  messages: any[]
-): Array<{
-  role: "user" | "assistant" | "system";
-  content: string;
-}> {
-  return messages.map((message) => ({
-    role: message.role === "assistant" ? "assistant" : "user",
-    content: message.content,
-  }));
-}
-
 export async function processChat({
   message,
   sessionId,
+  documentId,
 }: ProcessChatParams): Promise<ProcessChatResponse> {
   const user = await getAuthenticatedUser();
 
-  if (!message?.trim()) {
-    throw new Error("Message cannot be empty.");
-  }
+  let activeSessionId = sessionId ?? null;
 
-  let currentSessionId = sessionId ?? null;
+  /*
+   * ---------------------------------------------------------
+   * 1. Load or create chat session
+   * ---------------------------------------------------------
+   */
 
-  // --------------------------------------------------
-  // 1. Verify existing session ownership
-  // --------------------------------------------------
-
-  if (currentSessionId) {
-    if (!user) {
-      throw new Error("Unauthorized");
-    }
-
-    const session = await ChatSession.findOne({
-      _id: currentSessionId,
+  if (user && !activeSessionId) {
+    const newSession = await ChatSession.create({
       userId: user.userId,
+      title: message.slice(0, 50),
     });
 
-    if (!session) {
-      throw new Error("Session not found.");
-    }
+    activeSessionId = newSession._id.toString();
   }
 
-  // --------------------------------------------------
-  // 2. Create a new session for signed-in users
-  // --------------------------------------------------
+  /*
+   * ---------------------------------------------------------
+   * 2. Load previous conversation history
+   * ---------------------------------------------------------
+   */
 
-  if (user && !currentSessionId) {
-    const title =
-      message.length > 50
-        ? message.substring(0, 50) + "..."
-        : message;
+  let previousMessages: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }> = [];
 
-    const session = await ChatSession.create({
+  if (user && activeSessionId) {
+    const history = await Message.find({
+      sessionId: activeSessionId,
       userId: user.userId,
-      title,
-    });
+    })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
 
-    currentSessionId = session._id.toString();
+    previousMessages = history
+      .reverse()
+      .map((item) => ({
+        role: item.role as "user" | "assistant",
+        content: item.content,
+      }));
   }
 
-  // --------------------------------------------------
-  // 3. Get previous conversation history
-  // --------------------------------------------------
-
-  let conversationHistory: any[] = [];
-
-  if (currentSessionId) {
-    conversationHistory =
-      await getConversationHistory(currentSessionId);
-  }
-
-  // --------------------------------------------------
-  // 4. Initialize RAG sources
-  // --------------------------------------------------
-
-  let sources: ProcessChatResponse["sources"] = [];
-
-  // --------------------------------------------------
-  // 5. Retrieve relevant document chunks
-  // --------------------------------------------------
+  /*
+   * ---------------------------------------------------------
+   * 3. RAG retrieval
+   * ---------------------------------------------------------
+   *
+   * RAG runs only when a specific document is selected.
+   *
+   * Without documentId, the user gets normal AI chat and
+   * previously uploaded documents are not searched.
+   */
 
   let ragPrompt = message;
 
-  if (user) {
+  let sources: ProcessChatResponse["sources"] = [];
+
+  if (user && documentId) {
+    /*
+     * Verify that the document:
+     * - exists
+     * - belongs to the authenticated user
+     * - has completed ingestion
+     */
+
+    const document = await Document.findOne({
+      _id: documentId,
+      userId: user.userId,
+      status: "completed",
+    }).lean();
+
+    if (!document) {
+      throw new Error(
+        "Document not found or is not ready for questions."
+      );
+    }
+
+    console.log("========== RAG RETRIEVAL ==========");
+    console.log("[RAG] Question:", message);
+    console.log("[RAG] Document ID:", documentId);
+    console.log("[RAG] Document:", document.originalName);
+    console.log("[RAG] Requested Top-K: 5");
+
+    /*
+     * Retrieve chunks ONLY from the selected document.
+     */
+
     const retrievedChunks = await retrieveRelevantChunks({
       query: message,
       userId: user.userId,
+      documentId,
       limit: 5,
     });
 
-    sources = retrievedChunks.map((chunk) => ({
-      documentId: String(chunk.documentId),
+    console.log(
+      "[RAG] Retrieved chunks:",
+      retrievedChunks.length
+    );
 
-      documentName:
-        typeof chunk.metadata?.originalName === "string"
-          ? chunk.metadata.originalName
-          : "Unknown Document",
+    retrievedChunks.forEach((chunk, index) => {
+      console.log(`[RAG] Source ${index + 1}:`);
 
-      chunkIndex: chunk.chunkIndex,
+      console.log(
+        `      Document: ${chunk.metadata?.originalName ||
+        document.originalName
+        }`
+      );
 
-      score: chunk.score,
-    }));
+      console.log(`      Chunk: ${chunk.chunkIndex}`);
+
+      console.log(
+        `      Score: ${chunk.score?.toFixed(4) ?? "N/A"
+        }`
+      );
+    });
+
+    console.log("===================================");
+
+    /*
+     * Build the final RAG prompt.
+     *
+     * buildRagPrompt() internally calls buildRagContext()
+     * using the retrieved chunks.
+     */
 
     ragPrompt = buildRagPrompt({
       question: message,
       chunks: retrievedChunks,
     });
+
+    /*
+     * Keep source information for the API response.
+     */
+
+    sources = retrievedChunks.map((chunk) => ({
+      documentId: String(chunk.documentId),
+      documentName:
+        typeof chunk.metadata?.originalName === "string"
+          ? chunk.metadata.originalName
+          : document.originalName,
+      chunkIndex: chunk.chunkIndex,
+      score: chunk.score,
+    }));
   }
 
-  // --------------------------------------------------
-  // 6. Build AI conversation
-  // --------------------------------------------------
+  /*
+   * ---------------------------------------------------------
+   * 4. Build AI conversation
+   * ---------------------------------------------------------
+   */
 
-  const aiMessages: Array<{
-    role: "user" | "assistant" | "system";
-    content: string;
-  }> = [
-    ...convertMessagesToAIHistory(conversationHistory),
-
+  const aiMessages = [
+    ...previousMessages,
     {
-      role: "user",
+      role: "user" as const,
       content: ragPrompt,
     },
   ];
 
-  // --------------------------------------------------
-  // 7. Generate AI response
-  // --------------------------------------------------
+  /*
+   * ---------------------------------------------------------
+   * 5. Generate AI response
+   * ---------------------------------------------------------
+   */
 
   const reply = await generateChatCompletion({
     model: AI_CONFIG.MODEL,
@@ -190,22 +208,32 @@ export async function processChat({
     maxOutputTokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
   });
 
-  // --------------------------------------------------
-  // 8. Persist messages
-  // --------------------------------------------------
+  /*
+   * ---------------------------------------------------------
+   * 6. Persist conversation
+   * ---------------------------------------------------------
+   */
 
-  if (currentSessionId) {
-    await saveUserMessage(currentSessionId, message);
-    await saveAssistantMessage(currentSessionId, reply);
+  if (user && activeSessionId) {
+    await Message.create([
+      {
+        sessionId: activeSessionId,
+        userId: user.userId,
+        role: "user",
+        content: message,
+      },
+      {
+        sessionId: activeSessionId,
+        userId: user.userId,
+        role: "assistant",
+        content: reply,
+      },
+    ]);
   }
-
-  // --------------------------------------------------
-  // 9. Return response
-  // --------------------------------------------------
 
   return {
     reply,
-    sessionId: currentSessionId,
+    sessionId: activeSessionId,
     sources,
   };
 }

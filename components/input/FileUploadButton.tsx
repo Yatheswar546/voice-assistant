@@ -1,5 +1,9 @@
+"use client";
+
 import { Plus } from "lucide-react";
 import { useRef } from "react";
+
+import { useAuth } from "@/hooks/useAuth";
 
 interface FileUploadButtonProps {
   isLoading: boolean;
@@ -7,15 +11,30 @@ interface FileUploadButtonProps {
     status: "uploading" | "uploaded" | "error" | null,
     fileName?: string
   ) => void;
+  onDocumentUploaded: (
+    documentId: string,
+    fileName: string
+  ) => void;
 }
 
 export default function FileUploadButton({
   isLoading,
   onUploadStatusChange,
+  onDocumentUploaded,
 }: FileUploadButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { isAuthenticated } = useAuth();
+
   const handleClick = () => {
+    // Guests are not allowed to upload documents.
+    if (!isAuthenticated) {
+      window.alert("Please login to upload documents.");
+      return;
+    }
+
+    if (isLoading) return;
+
     fileInputRef.current?.click();
   };
 
@@ -24,16 +43,11 @@ export default function FileUploadButton({
   ) => {
     const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
-    // Show uploading state immediately
     onUploadStatusChange("uploading", file.name);
 
     try {
-      console.log("Selected file:", file);
-
       const formData = new FormData();
       formData.append("file", file);
 
@@ -52,15 +66,29 @@ export default function FileUploadButton({
         return;
       }
 
-      console.log("File uploaded successfully:", data);
+      const documentId = data.document?.id;
 
-      // Show uploaded state
+      if (!documentId) {
+        console.error(
+          "Upload succeeded but document ID was not returned."
+        );
+
+        onUploadStatusChange("error", file.name);
+        return;
+      }
+
+      console.log("File uploaded successfully:", data);
+      console.log("Active document ID:", documentId);
+
       onUploadStatusChange("uploaded", file.name);
+
+      // Pass the uploaded document ID to the parent component.
+      onDocumentUploaded(String(documentId), file.name);
     } catch (error) {
       console.error("File upload error:", error);
-
       onUploadStatusChange("error", file.name);
     } finally {
+      // Reset the input so the same file can be selected again.
       event.target.value = "";
     }
   };

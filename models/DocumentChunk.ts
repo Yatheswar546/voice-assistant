@@ -38,20 +38,33 @@ const DocumentChunkSchema = new Schema(
         type: Number,
         default: null,
       },
+
       sheetName: {
+        type: String,
+        default: null,
+        trim: true,
+      },
+
+      originalName: {
         type: String,
         default: null,
         trim: true,
       },
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-DocumentChunkSchema.index({ documentId: 1, chunkIndex: 1 }, { unique: true });
-DocumentChunkSchema.index({ userId: 1, documentId: 1 });
+DocumentChunkSchema.index(
+  { documentId: 1, chunkIndex: 1 },
+  { unique: true }
+);
+
+DocumentChunkSchema.index({
+  userId: 1,
+  documentId: 1,
+});
 
 export const DocumentChunk =
-  models.DocumentChunk || model("DocumentChunk", DocumentChunkSchema);
+  models.DocumentChunk ||
+  model("DocumentChunk", DocumentChunkSchema);

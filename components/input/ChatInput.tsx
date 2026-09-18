@@ -16,6 +16,12 @@ interface ChatInputProps {
   isListening: boolean;
   startListening: () => void;
   stopListening: () => void;
+
+  // Called when a document is successfully uploaded.
+  onDocumentUploaded: (
+    documentId: string,
+    fileName: string
+  ) => void;
 }
 
 export default function ChatInput({
@@ -26,6 +32,7 @@ export default function ChatInput({
   isListening,
   startListening,
   stopListening,
+  onDocumentUploaded,
 }: ChatInputProps) {
   const [uploadStatus, setUploadStatus] =
     useState<UploadStatus>(null);
@@ -46,12 +53,9 @@ export default function ChatInput({
 
   return (
     <footer className="border-t border-white/10 px-4 py-2 lg:px-12 lg:py-4">
-
-      {/* Uploaded File Status */}
       {uploadStatus && uploadedFileName && (
         <div className="mb-3 flex items-center">
           <div className="flex max-w-full items-center gap-2 rounded-lg border border-white/10 bg-[#16171D] px-3 py-2 text-sm text-gray-300">
-
             <FileText
               size={17}
               className="shrink-0 text-gray-400"
@@ -99,17 +103,15 @@ export default function ChatInput({
                 </span>
               </>
             )}
-
           </div>
         </div>
       )}
 
-      {/* Chat Input */}
       <div className="flex items-center gap-3 rounded-full border border-white/10 bg-[#16171D] px-4 py-2 shadow-[0_16px_45px_rgba(0,0,0,0.22)] lg:gap-4 lg:px-8 lg:py-3">
-
         <FileUploadButton
           isLoading={isLoading}
           onUploadStatusChange={handleUploadStatusChange}
+          onDocumentUploaded={onDocumentUploaded}
         />
 
         <input
@@ -132,7 +134,6 @@ export default function ChatInput({
           startListening={startListening}
           stopListening={stopListening}
         />
-
       </div>
     </footer>
   );

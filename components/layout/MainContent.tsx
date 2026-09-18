@@ -1,14 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import AssistantHeader from "@/components/assistant/AssistantHeader";
 import ChatWindow from "@/components/chat/ChatWindow";
 import ChatInput from "@/components/input/ChatInput";
-import { useState } from "react";
+import SettingsPanel from "../voice/SettingsPanel";
+
 import type { ChatMessage } from "@/types/chat";
+
 import { sendMessage } from "@/services/chat.service";
+
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
-import SettingsPanel from "../voice/SettingsPanel";
+
 import { useChat } from "@/context/ChatContext";
 
 interface MainContentProps {
@@ -18,8 +23,11 @@ interface MainContentProps {
 export default function MainContent({
   onOpenSidebar,
 }: MainContentProps) {
-
   const [input, setInput] = useState("");
+
+  // Stores the document currently selected for RAG questions.
+  const [activeDocumentId, setActiveDocumentId] =
+    useState<string | null>(null);
 
   const {
     messages,
@@ -48,9 +56,35 @@ export default function MainContent({
     voices,
   } = useSpeechSynthesis();
 
-  const handleSendMessage = async () => {
+  /**
+   * When the user starts a new chat,
+   * remove the previously selected document.
+   *
+   * This prevents a document from the previous chat
+   * accidentally becoming active in the new chat.
+   */
+  useEffect(() => {
+    if (activeSessionId === null) {
+      setActiveDocumentId(null);
+    }
+  }, [activeSessionId]);
 
-    // Prevent duplicate requests
+  /**
+   * Called by ChatInput after a document is
+   * successfully uploaded.
+   */
+  const handleDocumentUploaded = (
+    documentId: string,
+    fileName: string
+  ) => {
+    console.log("Document uploaded successfully.");
+    console.log("Document name:", fileName);
+    console.log("Active document ID:", documentId);
+
+    setActiveDocumentId(documentId);
+  };
+
+  const handleSendMessage = async () => {
     if (isLoading) return;
 
     const trimmedMessage = input.trim();
@@ -70,9 +104,15 @@ export default function MainContent({
       const assistantResponse = await sendMessage({
         message: trimmedMessage,
         sessionId: activeSessionId ?? undefined,
+
+        // Send the currently active document to the backend.
+        documentId: activeDocumentId ?? undefined,
       });
 
-      if(!activeSessionId && assistantResponse.sessionId) {
+      if (
+        !activeSessionId &&
+        assistantResponse.sessionId
+      ) {
         setActiveSessionId(assistantResponse.sessionId);
         await loadSessions();
       }
@@ -82,14 +122,13 @@ export default function MainContent({
         message: assistantResponse.reply,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [
+        ...prev,
+        assistantMessage,
+      ]);
 
       speak(assistantResponse.reply);
-
     } catch (error) {
-
-      // console.error(error);
-
       const assistantMessage: ChatMessage = {
         role: "assistant",
         message:
@@ -98,8 +137,10 @@ export default function MainContent({
             : "Unexpected error occurred.",
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-
+      setMessages((prev) => [
+        ...prev,
+        assistantMessage,
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +153,9 @@ export default function MainContent({
         isLoading={isLoading}
         isSpeaking={isSpeaking}
         onInterrupt={stop}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={() =>
+          setIsSettingsOpen(true)
+        }
         onOpenSidebar={onOpenSidebar}
       />
 
@@ -140,6 +183,7 @@ export default function MainContent({
         isListening={isListening}
         startListening={startListening}
         stopListening={stopListening}
+        onDocumentUploaded={handleDocumentUploaded}
       />
     </main>
   );
