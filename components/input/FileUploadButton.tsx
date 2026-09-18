@@ -3,10 +3,15 @@ import { useRef } from "react";
 
 interface FileUploadButtonProps {
   isLoading: boolean;
+  onUploadStatusChange: (
+    status: "uploading" | "uploaded" | "error" | null,
+    fileName?: string
+  ) => void;
 }
 
 export default function FileUploadButton({
   isLoading,
+  onUploadStatusChange,
 }: FileUploadButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,6 +27,9 @@ export default function FileUploadButton({
     if (!file) {
       return;
     }
+
+    // Show uploading state immediately
+    onUploadStatusChange("uploading", file.name);
 
     try {
       console.log("Selected file:", file);
@@ -40,12 +48,18 @@ export default function FileUploadButton({
 
       if (!response.ok) {
         console.error("Upload failed:", data);
+        onUploadStatusChange("error", file.name);
         return;
       }
 
       console.log("File uploaded successfully:", data);
+
+      // Show uploaded state
+      onUploadStatusChange("uploaded", file.name);
     } catch (error) {
       console.error("File upload error:", error);
+
+      onUploadStatusChange("error", file.name);
     } finally {
       event.target.value = "";
     }

@@ -1137,3 +1137,98 @@ I recommend **B architecturally**, because otherwise a normal question like *"Wh
 But we don't need to implement this right now. We can keep it in mind while integrating the chat flow.
 
 **For now, let's continue with Conversation Memory + RAG integration.**
+
+**Context Caching**
+If your application repeatedly uploads large background files or system instructions, utilize Context Caching which drops the storage cost significantly compared to resending raw input tokens every time.
+
+------------------ TOKEN CALCULATOR START ------------------
+
+Here is a complete, production-ready sample code for a Gemini chat interface in Python.
+This code uses the latest google-genai SDK, targets gemini-2.5-flash (the correct model name for Gemini 2.5/3.8 Flash iterations in development), and includes built-in token tracking and cost estimation so you can watch your ₹700 budget dynamically as you chat.
+## Prerequisites
+First, make sure you install the correct, current SDK:
+
+pip install google-genai
+
+You also need to set your API key as an environment variable before running the script:
+
+# On Linux/macOS
+export GEMINI_API_KEY="your_api_key_here"
+# On Windows (Command Prompt)set GEMINI_API_KEY=your_api_key_here
+# On Windows (PowerShell)
+$env:GEMINI_API_KEY="your_api_key_here"
+
+## Python Script (gemini_chat_with_billing.py)
+
+import osimport sysfrom google import genaifrom google.genai import types
+# 1. Initialize the GenAI Client (auto-detects GEMINI_API_KEY from environment)if not os.environ.get("GEMINI_API_KEY"):
+    print("Error: GEMINI_API_KEY environment variable not set.")
+    sys.exit(1)
+client = genai.Client()
+# 2. Configure the model (Using the official Flash production string)MODEL_NAME = 'gemini-2.5-flash'
+# Introductory Pricing Rates (through Dec 31, 2026) converted roughly to INR # Assuming 1 USD = 84 INR. Change these values if tracking after Jan 1, 2027.COST_PER_1M_INPUT_INR = 0.75 * 84.0   # ~63 INR per million input tokensCOST_PER_1M_OUTPUT_INR = 3.75 * 84.0  # ~315 INR per million output tokens
+def estimate_cost_inr(input_tokens: int, output_tokens: int) -> float:
+    """Calculates the estimated cost of the turn in Indian Rupees (INR)"""
+    input_cost = (input_tokens / 1_000_000) * COST_PER_1M_INPUT_INR
+    output_cost = (output_tokens / 1_000_000) * COST_PER_1M_OUTPUT_INR
+    return input_cost + output_cost
+def run_chatbot():
+    # 3. Start a continuous chat session to preserve conversation history
+    print(f"Initializing Chat Session with {MODEL_NAME}...")
+    chat = client.chats.create(model=MODEL_NAME)
+    
+    total_session_cost_inr = 0.0
+    print("\n=======================================================")
+    print("Gemini Flash Chatbot with Live Wallet Tracking Initialized!")
+    print("Type 'exit' or 'quit' to end the session.")
+    print("=======================================================\n")
+
+    while True:
+        try:
+            user_input = input("You: ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() in ['exit', 'quit']:
+                print("\nEnding session.")
+                print(f"Total Session Wallet Consumption: ₹{total_session_cost_inr:.4f}")
+                break
+
+            # 4. Send message to the model
+            # Note: We request usage metadata explicitly to track tokens
+            response = chat.send_message(
+                user_input,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                )
+            )
+
+            # 5. Extract token statistics from the response metadata
+            usage = response.usage_metadata
+            input_tokens = usage.prompt_token_count
+            output_tokens = usage.candidates_token_count
+            
+            # Calculate metrics
+            turn_cost = estimate_cost_inr(input_tokens, output_tokens)
+            total_session_cost_inr += turn_cost
+
+            # 6. Display Response and Cost Data
+            print(f"\nGemini: {response.text}")
+            print("-" * 40)
+            print(f"Tokens Used -> Input: {input_tokens} | Output: {output_tokens}")
+            print(f"Cost for this turn: ~₹{turn_cost:.4f}")
+            print(f"Total session drain: ~₹{total_session_cost_inr:.4f}")
+            print("=" * 40 + "\n")
+
+        except Exception as e:
+            print(f"\nAn error occurred: {e}\n")
+if __name__ == "__main__":
+    run_chatbot()
+
+## Key Elements to Keep For Your Final Code:
+
+* client.chats.create: Always use chat sessions instead of raw client.models.generate_content blocks for chatbots. This allows Google's SDK to handle appending old messages automatically.
+* response.usage_metadata: This block provides the precise count of tokens processed. Grounding your metrics on these properties guarantees you see exactly what your prepay wallet is being billed for down to the single token.
+
+Would you like to build an automated feature that saves this session log to a CSV or text file so you can audit your developer costs over time?
+
+------------------ TOKEN CALCULATOR END ------------------
