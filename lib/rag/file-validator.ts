@@ -1,3 +1,5 @@
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 const ALLOWED_FILE_TYPES = {
   pdf: {
     extensions: [".pdf"],
@@ -46,6 +48,13 @@ export function validateUploadedFile(file: File) {
     return {
       valid: false,
       message: "File cannot be empty.",
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      message: "File size should be a maximum of 5MB.",
     };
   }
 

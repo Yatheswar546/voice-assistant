@@ -45,6 +45,14 @@ export default function FileUploadButton({
 
     if (!file) return;
 
+    if (file.size > 5 * 1024 * 1024) {
+      window.alert(
+        "The file size should be a maximum of 5MB."
+      );
+      event.target.value = "";
+      return;
+    }
+
     onUploadStatusChange("uploading", file.name);
 
     try {

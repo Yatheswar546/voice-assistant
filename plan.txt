@@ -1141,6 +1141,107 @@ But we don't need to implement this right now. We can keep it in mind while inte
 **Context Caching**
 If your application repeatedly uploads large background files or system instructions, utilize Context Caching which drops the storage cost significantly compared to resending raw input tokens every time.
 
+=====================================================
+
+Final Testings Need to be DONE:
+
+1. Chat persistence/memory
+
+We need to thoroughly test:
+     new chat
+        → multiple turns
+        → reload
+        → reopen session
+        → continue conversation
+        → last-20 behavior
+
+2. Document lifecycle
+
+We need to test:
+     upload
+        → upload failure
+        → unsupported file
+        → empty/invalid document
+        → same document again
+        → multiple documents
+        → switching documents/chats
+
+3. RAG correctness
+
+     Especially:
+        document A question
+        document B question
+        generic question
+        question not present in document
+        cross-document leakage
+
+The user/document isolation is currently explicitly enforced in vector search and document validation, which is good.
+
+4. Session ownership/security
+
+The session PATCH/DELETE routes now scope operations to:
+
+{ _id: sessionId, userId: user.userId }
+
+and message retrieval also requires authenticated ownership. We should still test these through actual requests.
+
+5. Authentication lifecycle
+
+     Need to test:
+        → register
+        → login
+        → refresh/reload
+        → logout
+        → guest mode
+        → upload while logged out
+
+6. Voice
+
+Need separate testing for:
+        → speech recognition
+        → speech synthesis
+        → auto speak
+        → voice selection
+        → settings persistence
+        → unsupported browser behavior
+
+7. UI/state edge cases
+
+Especially:
+        → new session
+        → session switch
+        → delete active session
+        → rename session
+        → reload
+        → upload while switching
+        → upload failure
+
+8. AI providers
+
+The current abstraction is:
+
+lib/ai.ts
+   ├── Gemini
+   └── Ollama
+
+so later we should test both configurations independently rather than assuming only the currently configured provider works.
+
+9. Code quality
+
+I also noticed some older/stale material and unused infrastructure in the repo. We should separate:
+
+actual runtime issues
+vs
+cleanup/refactoring
+
+and not touch cleanup until the functional testing is complete.
+
+
+=====================================================
+
+
+
+
 ------------------ TOKEN CALCULATOR START ------------------
 
 Here is a complete, production-ready sample code for a Gemini chat interface in Python.
