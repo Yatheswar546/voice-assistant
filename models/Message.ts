@@ -8,6 +8,12 @@ const MessageSchema = new Schema(
       required: true,
     },
 
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
     role: {
       type: String,
       enum: ["user", "assistant"],
@@ -18,6 +24,12 @@ const MessageSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+    },
+
+    documentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Document",
+      default: null,
     },
   },
   {

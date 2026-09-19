@@ -27,13 +27,17 @@ export async function retrieveRelevantChunks({
     throw new Error("Query cannot be empty.");
   }
 
+  await connectDB();
+
   console.log("\n========== RAG RETRIEVAL ==========");
   console.log("[RAG] Question:", query);
   console.log("[RAG] Requested Top-K:", limit);
 
-  await connectDB();
+  if (documentId) {
+    console.log("[RAG] Searching document:", documentId);
+  }
 
-  // 1. Generate embedding for the user's question
+  // Generate query embedding
   const queryVector = await generateEmbedding(query);
 
   console.log(
@@ -41,7 +45,7 @@ export async function retrieveRelevantChunks({
     queryVector.length
   );
 
-  // 2. Search MongoDB Atlas Vector Search
+  // Search MongoDB Atlas Vector Search
   const results = (await searchSimilarChunks({
     userId,
     queryVector,
@@ -51,7 +55,6 @@ export async function retrieveRelevantChunks({
 
   console.log("[RAG] Retrieved chunks:", results.length);
 
-  // 3. Log retrieved sources
   results.forEach((chunk, index) => {
     const documentName =
       typeof chunk.metadata?.originalName === "string"
