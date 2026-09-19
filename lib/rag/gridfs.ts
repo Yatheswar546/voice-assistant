@@ -25,6 +25,7 @@ export async function uploadFileToGridFS(
     documentId: string;
     userId: string;
     mimeType: string;
+    fileName: string;
   }
 ) {
   const bucket = getGridFSBucket();
@@ -32,7 +33,7 @@ export async function uploadFileToGridFS(
   const buffer = Buffer.from(await file.arrayBuffer());
 
   return new Promise<ObjectId>((resolve, reject) => {
-    const uploadStream = bucket.openUploadStream(file.name, {
+    const uploadStream = bucket.openUploadStream(metadata.fileName, {
       metadata: {
         documentId: metadata.documentId,
         userId: metadata.userId,

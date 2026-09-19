@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { Document } from "@/models/Document";
-import { validateUploadedFile } from "@/lib/rag/file-validator";
+import {
+  sanitizeFileName,
+  validateUploadedFile,
+} from "@/lib/rag/file-validator";
 import { uploadFileToGridFS } from "@/lib/rag/gridfs";
 import { ingestDocument } from "@/lib/rag/ingestion-service";
 
@@ -43,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     const validation = validateUploadedFile(file);
 
-    if(!validation.valid) {
+    if (!validation.valid) {
       return NextResponse.json(
         {
           success: false,
@@ -55,9 +58,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert the user-provided filename into a safe filename.
+    const safeFileName = sanitizeFileName(file.name);
+
     const document = await Document.create({
       userId: user.userId,
-      originalName: file.name,
+      originalName: safeFileName,
       mimeType: file.type,
       size: file.size,
       status: "completed",
@@ -68,17 +74,19 @@ export async function POST(req: NextRequest) {
         documentId: document._id.toString(),
         userId: user.userId.toString(),
         mimeType: file.type,
+        fileName: safeFileName,
       });
 
       document.gridFsFileId = gridFsFileId;
+
       await document.save();
-    } catch(error) {
+    } catch (error) {
       await Document.findByIdAndUpdate(document._id, {
         status: "failed",
         errorMessage: "Failed to store uploaded file.",
       });
 
-      throw(error);
+      throw error;
     }
 
     await ingestDocument(document._id.toString());

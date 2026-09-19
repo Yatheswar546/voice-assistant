@@ -664,11 +664,11 @@ multipart/form-data ✅
 authenticated-user ownership ✅
 
 03: File Validation
-file size validation
+file size validation ✅
 MIME/type validation ✅
 allowed extensions ✅
 MIME validation ✅
-size limits
+size limits ✅
 safe filename handling
 
 ✅ 04: Parser Architecture
