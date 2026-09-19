@@ -47,7 +47,7 @@ Additional Add-Ons
 💬 Typing Animation ✅ 
 ⚡ Streaming Gemini Responses ✅
 🧠 Conversation Memory ✅
-📄 Document Upload + RAG
+📄 Document Upload + RAG ✅
 🛠️ Tool Calling / Function Calling
 🚀 Deployment and Production Optimization
 
@@ -324,14 +324,14 @@ After Version 1.0 is deployed, the project can evolve into a much more advanced 
 
 Transform the assistant into a document-aware AI by implementing Retrieval-Augmented Generation (RAG).
 
-### Document Upload
+✅ ### Document Upload
 
 Support:
 
-* PDF
-* DOCX
-* TXT
-* Image
+* PDF   ✅
+* DOCX  ✅
+* TXT   ✅
+* Image ✅
 * Markdown
 
 ---
@@ -340,16 +340,16 @@ Support:
 
 Implement:
 
-* Upload PDFs
-* Upload DOCX files
+* Upload PDFs ✅
+* Upload DOCX files ✅
 * Upload TXT/Markdown files
-* Document Chunking
-* Embeddings
-* Vector Database
+* Document Chunking ✅
+* Embeddings ✅
+* Vector Database ✅
 * Semantic Search
-* Context Retrieval
-* Answer questions based on uploaded documents
-* AI-powered Question Answering
+* Context Retrieval ✅
+* Answer questions based on uploaded documents ✅
+* AI-powered Question Answering ✅
 
 This is one of the major GenAI features of the project.
 
@@ -550,7 +550,7 @@ Markdown
         ↓
 ✔ Responsive UI
         ↓
-Deployment
+✔ Deployment
 
 
 =====================================
@@ -590,26 +590,26 @@ Version 1.0
 └── ...
 
 Version 1.1 – Token-Based Context Management
-├── Token-based Context Window
-└── Better Context Management
+├── ✅ Token-based Context Window
+└── ✅ Better Context Management
 
 Version 1.2 – Automatic Conversation Summarization
-├── Conversation Summarization
-└── Automatic Summary Storage
+├── ✅ Conversation Summarization
+└── ✅ Automatic Summary Storage
 
 Version 1.3 – Intelligent Context Selection
-├── Intelligent Context Selection
-└── Select Relevant Ones (messages and responses)
+├── ✅ Intelligent Context Selection
+└── ✅ Select Relevant Ones (messages and responses)
 
 Version 2.0 – RAG (Retrieval-Augmented Generation)
-├── RAG Memory
-├── Embeddings
-├── Vector Database
+├── ✅ RAG Memory
+├── ✅ Embeddings
+├── ✅ Vector Database
 └── Semantic Search
 
 Version 2.1 - Hybrid Memory Architecture
 ├── Combine multiple memory strategies. (Conversation Summary + Recent Messages + Relevant Vector Search Results)
-├── Similarity Retrieval
+├── ✅ Similarity Retrieval
 └── Long-term Memory
 
 Version 2.2 – User Memory
@@ -663,13 +663,13 @@ UI also need to be done ✅
 multipart/form-data ✅
 authenticated-user ownership ✅
 
-03: File Validation
+✅ 03: File Validation
 file size validation ✅
 MIME/type validation ✅
 allowed extensions ✅
 MIME validation ✅
 size limits ✅
-safe filename handling
+safe filename handling ✅
 
 ✅ 04: Parser Architecture
 Parser
@@ -702,7 +702,7 @@ We have used "character-based fixed-size" chunking with overlap at 1st Stage.
 embedding model ✅
 embedding generation ✅ (generate embedding for each chunk and store them in MongoDB)
 vector dimensions ✅
-batching where useful 
+batching where useful - needed for production-level for large documents and huge cases
 We used "gemini-embedding-001" support
 
 ✅ 09: MongoDB Vector Search
@@ -782,7 +782,8 @@ Integrate the existing conversation-memory system.
    |-> Use the existing Last 20 Messages strategy 
    |-> Identify current user question ✅
    |-> Keep previous conversation context
-   |-> Avoid mixing document context with conversation history
+   |-> Avoid mixing document context with conversation history 
+        between different chats and users ✅
 
 Flow:
             (A)
@@ -1070,7 +1071,11 @@ Overall Workflow for this phase:
 Prompt:
 Thank you for the detailed plan
 
-So, help me in this phase. Also, if we need to import any external libraries and use any tools from other websites then tell me clearly how to use them.  While coding part, tell me which file to change and which part of the file need to be changed exactly, everytime when we need to do changes in code.  And explain me the topics but no need of in-depth each topic to kill the time.  Got it, any more questions. The planning is all done previously if you refer to our previous chats. Now, let's start the work  
+So, help me in this phase. Also, if we need to import any external libraries and use any tools from
+ other websites then tell me clearly how to use them.  While coding part, tell me which file to change 
+ and which part of the file need to be changed exactly, everytime when we need to do changes in code.  
+ And explain me the topics but no need of in-depth each topic to kill the time.  Got it, any more questions. 
+ The planning is all done previously if you refer to our previous chats. Now, let's start the work  
 
 =================================
 
@@ -1094,7 +1099,7 @@ I would keep it this way.
 
 ### Just take care of 4 things
 
-1. **Frontend check**
+✅ 1. **Frontend check**
    When the user clicks `+`, check `user` from your existing `AuthContext`.
 
    * Not signed in → show **"Please sign in to upload documents."**
@@ -1117,7 +1122,7 @@ I would keep it this way.
 
    **Never allow the client to freely choose another user's `userId`.**
 
-4. **Guest chat should remain unchanged**
+✅ 4. **Guest chat should remain unchanged**
    Guest users should continue using the existing text/voice chat flow without MongoDB document retrieval.
 
 ### One important decision
@@ -1155,6 +1160,9 @@ We need to thoroughly test:
         → continue conversation
         → last-20 behavior
 
+*** need to change the way on how the response is being generated
+*** Markdown rendering / prompting
+
 2. Document lifecycle
 
 We need to test:
@@ -1165,6 +1173,10 @@ We need to test:
         → same document again
         → multiple documents
         → switching documents/chats
+
+*** when we upload 2 documents one-by-one then the model is forgetting about the 1st document immediately even though the 20 recent messages is present
+*** also we need to add a delete operation for the uploaded doc before the 1st prompt after that the delete operation should be removed. 
+    It is because in-case if user enter a doc by-mistake so he can remove it immediately
 
 3. RAG correctness
 
