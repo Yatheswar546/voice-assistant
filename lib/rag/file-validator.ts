@@ -36,31 +36,16 @@ const ALLOWED_MIME_TYPES = Object.values(ALLOWED_FILE_TYPES).flatMap(
   (type) => type.mimeTypes
 );
 
-/**
- * Converts a user-provided filename into a safe filename.
- */
 export function sanitizeFileName(fileName: string) {
-  // Remove any directory/path information.
   const baseName =
     fileName.replace(/\\/g, "/").split("/").pop() || "uploaded-file";
 
   const sanitized = baseName
-    // Normalize Unicode characters.
     .normalize("NFKC")
-
-    // Remove control characters.
     .replace(/[\u0000-\u001F\u007F]/g, "")
-
-    // Replace potentially dangerous filename characters.
     .replace(/[<>:"/\\|?*]/g, "_")
-
-    // Remove unnecessary whitespace.
     .trim()
-
-    // Prevent filenames ending with dots or spaces.
     .replace(/[. ]+$/, "")
-
-    // Keep filename within a reasonable filesystem-compatible length.
     .slice(0, 255);
 
   return sanitized || "uploaded-file";
@@ -88,7 +73,6 @@ export function validateUploadedFile(file: File) {
     };
   }
 
-  // Validate the sanitized filename.
   const fileName = sanitizeFileName(file.name).toLowerCase();
 
   const extension = fileName.includes(".")
