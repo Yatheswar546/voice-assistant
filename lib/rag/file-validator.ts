@@ -36,6 +36,21 @@ const ALLOWED_MIME_TYPES = Object.values(ALLOWED_FILE_TYPES).flatMap(
   (type) => type.mimeTypes
 );
 
+export function sanitizeFileName(fileName: string) {
+  const baseName =
+    fileName.replace(/\\/g, "/").split("/").pop() || "uploaded-file";
+
+  const sanitized = baseName
+    .normalize("NFKC")
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/[<>:"/\\|?*]/g, "_")
+    .trim()
+    .replace(/[. ]+$/, "")
+    .slice(0, 255);
+
+  return sanitized || "uploaded-file";
+}
+
 export function validateUploadedFile(file: File) {
   if (!file) {
     return {
@@ -58,13 +73,17 @@ export function validateUploadedFile(file: File) {
     };
   }
 
-  const fileName = file.name.toLowerCase();
+  const fileName = sanitizeFileName(file.name).toLowerCase();
 
   const extension = fileName.includes(".")
     ? fileName.slice(fileName.lastIndexOf("."))
     : "";
 
-  if (!ALLOWED_EXTENSIONS.includes(extension as (typeof ALLOWED_EXTENSIONS)[number])) {
+  if (
+    !ALLOWED_EXTENSIONS.includes(
+      extension as (typeof ALLOWED_EXTENSIONS)[number]
+    )
+  ) {
     return {
       valid: false,
       message: "Unsupported file type.",
