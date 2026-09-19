@@ -8,6 +8,10 @@ import { Message } from "@/models/Message";
 
 import { retrieveRelevantChunks } from "@/lib/rag/retriever";
 import { buildRagPrompt } from "@/lib/rag/prompt-builder";
+import {
+  routeQuery,
+  type QueryType,
+} from "@/lib/rag/query-router";
 
 interface ProcessChatParams {
   message: string;
@@ -29,26 +33,6 @@ export interface ProcessChatResponse {
 const MAX_COMPARISON_DOCUMENTS = 2;
 const RAG_TOP_K_PER_DOCUMENT = 5;
 
-function isComparisonQuestion(message: string): boolean {
-  const normalizedMessage = message.toLowerCase();
-
-  const comparisonKeywords = [
-    "compare",
-    "comparison",
-    "difference",
-    "differences",
-    "different",
-    "both",
-    "between",
-    "versus",
-    "vs",
-  ];
-
-  return comparisonKeywords.some((keyword) =>
-    normalizedMessage.includes(keyword)
-  );
-}
-
 export async function processChat({
   message,
   sessionId,
@@ -60,7 +44,7 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 1. Validate the selected document
+   * 1. Validate selected document
    * ---------------------------------------------------------
    */
 
@@ -141,7 +125,8 @@ export async function processChat({
       .lean();
 
     /*
-     * Get unique document IDs from the last 20 messages.
+     * Collect document IDs associated with the
+     * previous 20 messages.
      */
     conversationDocumentIds = [
       ...new Set(
@@ -157,6 +142,10 @@ export async function processChat({
       ),
     ];
 
+    /*
+     * Convert history into chronological order
+     * for the AI conversation.
+     */
     previousMessages = history
       .reverse()
       .map((item) => ({
@@ -166,7 +155,8 @@ export async function processChat({
   }
 
   /*
-   * Add currently active document.
+   * Add currently active document to the conversation
+   * document list.
    */
   if (documentId) {
     conversationDocumentIds = [
@@ -179,161 +169,190 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 5. Determine RAG retrieval strategy
+   * 5. Determine query type
    * ---------------------------------------------------------
    */
 
-  const isComparison = isComparisonQuestion(message);
+  const queryType: QueryType = routeQuery({
+    message,
+    hasDocument: conversationDocumentIds.length > 0,
+    hasMultipleDocuments:
+      conversationDocumentIds.length > 1,
+  });
+
+  console.log("========== QUERY ROUTER ==========");
+  console.log("[Router] Question:", message);
+  console.log("[Router] Query type:", queryType);
+  console.log(
+    "[Router] Conversation documents:",
+    conversationDocumentIds
+  );
+  console.log("==================================");
+
+  /*
+   * ---------------------------------------------------------
+   * 6. RAG retrieval
+   * ---------------------------------------------------------
+   */
 
   let ragPrompt = message;
 
   let sources: ProcessChatResponse["sources"] = [];
 
-  if (user && documentId) {
-    /*
-     * -------------------------------------------------------
-     * Normal single-document question
-     * -------------------------------------------------------
-     */
+  /*
+   * =========================================================
+   * GENERAL QUERY
+   * =========================================================
+   *
+   * No document retrieval.
+   *
+   * Example:
+   * "Hello, how are you?"
+   * "Are you ready to work?"
+   */
 
-    if (!isComparison || conversationDocumentIds.length <= 1) {
-      console.log("========== RAG RETRIEVAL ==========");
-      console.log("[RAG] Mode: Single Document");
-      console.log("[RAG] Question:", message);
-      console.log("[RAG] Document:", documentId);
-      console.log("[RAG] Requested Top-K:", RAG_TOP_K_PER_DOCUMENT);
+  if (user && queryType === "general") {
+    console.log(
+      "[RAG] Skipped - general conversation query."
+    );
+  }
 
-      const retrievedChunks = await retrieveRelevantChunks({
+  /*
+   * =========================================================
+   * SINGLE DOCUMENT QUERY
+   * =========================================================
+   */
+
+  if (
+    user &&
+    queryType === "document" &&
+    documentId
+  ) {
+    console.log("========== RAG RETRIEVAL ==========");
+    console.log("[RAG] Mode: Single Document");
+    console.log("[RAG] Question:", message);
+    console.log("[RAG] Document:", documentId);
+    console.log(
+      "[RAG] Requested Top-K:",
+      RAG_TOP_K_PER_DOCUMENT
+    );
+
+    const retrievedChunks =
+      await retrieveRelevantChunks({
         query: message,
         userId: user.userId,
         documentId,
         limit: RAG_TOP_K_PER_DOCUMENT,
       });
 
-      ragPrompt = buildRagPrompt({
-        question: message,
-        chunks: retrievedChunks,
-      });
+    console.log(
+      "[RAG] Retrieved chunks:",
+      retrievedChunks.length
+    );
 
-      sources = retrievedChunks.map((chunk) => ({
-        documentId: String(chunk.documentId),
-        documentName:
-          typeof chunk.metadata?.originalName === "string"
-            ? chunk.metadata.originalName
-            : activeDocumentName || "Unknown Document",
-        chunkIndex: chunk.chunkIndex,
-        score: chunk.score,
-      }));
+    ragPrompt = buildRagPrompt({
+      question: message,
+      chunks: retrievedChunks,
+    });
 
-      console.log("===================================");
-    }
+    sources = retrievedChunks.map((chunk) => ({
+      documentId: String(chunk.documentId),
+      documentName:
+        typeof chunk.metadata?.originalName === "string"
+          ? chunk.metadata.originalName
+          : activeDocumentName || "Unknown Document",
+      chunkIndex: chunk.chunkIndex,
+      score: chunk.score,
+    }));
+
+    console.log("===================================");
+  }
+
+  /*
+   * =========================================================
+   * TWO DOCUMENT COMPARISON
+   * =========================================================
+   */
+
+  if (
+    user &&
+    queryType === "comparison" &&
+    conversationDocumentIds.length >=
+      MAX_COMPARISON_DOCUMENTS
+  ) {
+    const comparisonDocumentIds =
+      conversationDocumentIds.slice(
+        -MAX_COMPARISON_DOCUMENTS
+      );
+
+    console.log("========== RAG RETRIEVAL ==========");
+    console.log(
+      "[RAG] Mode: Two Document Comparison"
+    );
+    console.log("[RAG] Question:", message);
+    console.log(
+      "[RAG] Documents:",
+      comparisonDocumentIds
+    );
+    console.log(
+      "[RAG] Top-K per document:",
+      RAG_TOP_K_PER_DOCUMENT
+    );
 
     /*
-     * -------------------------------------------------------
-     * Two-document comparison
-     * -------------------------------------------------------
+     * Retrieve independently from each document.
+     *
+     * Document A → Top 5
+     * Document B → Top 5
      */
-
-    else {
-      const comparisonDocumentIds =
-        conversationDocumentIds.slice(
-          -MAX_COMPARISON_DOCUMENTS
-        );
-
-      if (
-        comparisonDocumentIds.length !==
-        MAX_COMPARISON_DOCUMENTS
-      ) {
-        throw new Error(
-          "A comparison requires two documents."
-        );
-      }
-
-      console.log("========== RAG RETRIEVAL ==========");
-      console.log("[RAG] Mode: Two Document Comparison");
-      console.log("[RAG] Question:", message);
-      console.log(
-        "[RAG] Documents:",
-        comparisonDocumentIds
-      );
-      console.log(
-        "[RAG] Top-K per document:",
-        RAG_TOP_K_PER_DOCUMENT
-      );
-
-      /*
-       * Retrieve Top-K independently from each document.
-       *
-       * This is the important difference from the previous
-       * implementation.
-       */
-
-      const retrievedChunksByDocument =
-        await Promise.all(
-          comparisonDocumentIds.map((currentDocumentId) =>
+    const retrievedChunksByDocument =
+      await Promise.all(
+        comparisonDocumentIds.map(
+          (currentDocumentId) =>
             retrieveRelevantChunks({
               query: message,
               userId: user.userId,
               documentId: currentDocumentId,
               limit: RAG_TOP_K_PER_DOCUMENT,
             })
-          )
-        );
-
-      const retrievedChunks =
-        retrievedChunksByDocument.flat();
-
-      console.log(
-        "[RAG] Total comparison chunks:",
-        retrievedChunks.length
+        )
       );
 
-      retrievedChunks.forEach((chunk, index) => {
-        const documentName =
-          typeof chunk.metadata?.originalName === "string"
-            ? chunk.metadata.originalName
-            : "Unknown Document";
+    const retrievedChunks =
+      retrievedChunksByDocument.flat();
 
-        console.log(`[RAG] Source ${index + 1}:`);
-        console.log(
-          "      Document:",
-          documentName
-        );
-        console.log(
-          "      Chunk:",
-          chunk.chunkIndex
-        );
-        console.log(
-          "      Score:",
-          chunk.score?.toFixed(4) ?? "N/A"
-        );
-      });
+    console.log(
+      "[RAG] Total comparison chunks:",
+      retrievedChunks.length
+    );
 
-      /*
-       * Build context containing chunks from BOTH documents.
-       */
-      ragPrompt = buildRagPrompt({
-        question: message,
-        chunks: retrievedChunks,
-      });
+    /*
+     * Build RAG prompt using both documents.
+     */
+    ragPrompt = buildRagPrompt({
+      question: message,
+      chunks: retrievedChunks,
+    });
 
-      sources = retrievedChunks.map((chunk) => ({
-        documentId: String(chunk.documentId),
-        documentName:
-          typeof chunk.metadata?.originalName === "string"
-            ? chunk.metadata.originalName
-            : "Unknown Document",
-        chunkIndex: chunk.chunkIndex,
-        score: chunk.score,
-      }));
+    /*
+     * Return source information.
+     */
+    sources = retrievedChunks.map((chunk) => ({
+      documentId: String(chunk.documentId),
+      documentName:
+        typeof chunk.metadata?.originalName === "string"
+          ? chunk.metadata.originalName
+          : "Unknown Document",
+      chunkIndex: chunk.chunkIndex,
+      score: chunk.score,
+    }));
 
-      console.log("===================================");
-    }
+    console.log("===================================");
   }
 
   /*
    * ---------------------------------------------------------
-   * 6. Build AI conversation
+   * 7. Build AI conversation
    * ---------------------------------------------------------
    */
 
@@ -347,7 +366,7 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 7. Generate AI response
+   * 8. Generate AI response
    * ---------------------------------------------------------
    */
 
@@ -360,7 +379,7 @@ export async function processChat({
 
   /*
    * ---------------------------------------------------------
-   * 8. Persist conversation
+   * 9. Persist conversation
    * ---------------------------------------------------------
    */
 
@@ -382,6 +401,12 @@ export async function processChat({
       },
     ]);
   }
+
+  /*
+   * ---------------------------------------------------------
+   * 10. Return response
+   * ---------------------------------------------------------
+   */
 
   return {
     reply,

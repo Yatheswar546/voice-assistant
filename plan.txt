@@ -774,13 +774,13 @@ Flow:
 
 
 
-03: Conversation Memory
+✅ 03: Conversation Memory
 
 Integrate the existing conversation-memory system.
    |-> Retrieve recent conversation messages ✅
-   |-> Use the existing Last 20 Messages strategy 
+   |-> Use the existing Last 20 Messages strategy ✅
    |-> Identify current user question ✅
-   |-> Keep previous conversation context
+   |-> Keep previous conversation context ✅
    |-> Avoid mixing document context with conversation history 
         between different chats and users ✅
 
@@ -801,7 +801,7 @@ Flow:
              ↓
         Gemini
 
-NOTE: per-document retrieval.
+NOTE: per-document retrieval for handling 2 docs in a single chat
 Multi-document retrieval strategy
      ↓
 Global Top 5 retrieval strategy
@@ -903,6 +903,13 @@ We need to decide how the chat knows which documents should participate in retri
         Retriever
              ↓
         Relevant Chunks
+
+NOTE: production-quality RAG systems commonly add a retrieval decision/gating step.
+It is not necessary to retrieve the document for every que. 
+Because of it "Embedding API Usage", "buildRagePrompt", "unnecessary input tokens", "latency", "rate limits/traffic" are effected and increases the burden.
+
+For V1.2 lightweight routing with some basic fixed words, not a perfect semantic classifier.
+
 
 
 ✅ 09: Chat Response Persistence
@@ -1177,7 +1184,7 @@ We need to test:
         → multiple documents
         → switching documents/chats
 
-*** when we upload 2 documents one-by-one then the model is forgetting about the 1st document immediately even though the 20 recent messages is present
+*** need to compare whether it can handle a pdf and a png image in a single chat
 *** also we need to add a delete operation for the uploaded doc before the 1st prompt after that the delete operation should be removed. 
     It is because in-case if user enter a doc by-mistake so he can remove it immediately
 
@@ -1257,6 +1264,10 @@ and not touch cleanup until the functional testing is complete.
 ------- Recommended Suggestion in future ----------
 Embeddings: 
 batching where useful - needed for production-level for large documents and huge cases
+
+Conversation Memory:
+The present model handles 2 documents in a single chat, in future we need to increase the limits.
+So a single chat can handle upto min. 5 documents (pdf, word, excel, png)
 
 
 
